@@ -20,4 +20,26 @@ export default defineSchema({
     categories: defineTable({
         name: v.string(),
     }),
+    orders: defineTable({
+        orderId: v.string(),
+        customer: v.object({
+            name: v.string(),
+            email: v.string(),
+            year: v.string(),
+        }),
+        items: v.array(v.object({
+            name: v.string(),
+            qty: v.number(),
+            price: v.number(),
+            color: v.optional(v.string()),
+            size: v.optional(v.string()),
+        })),
+        subtotal: v.number(),
+        total: v.number(),
+        status: v.string(), // 'Processing', 'Shipped', 'Delivered', 'Cancelled'
+        createdAt: v.number(),
+    }),
 });
+
+// Triggering backend re-index for new orders module
+

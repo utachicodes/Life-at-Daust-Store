@@ -5,8 +5,8 @@ export const COLLECTIONS = [
         slug: "summer",
     },
     {
-        title: "Winter Essentials",
-        image: "http://static.photos/fashion/640x360/22",
+        title: "Daustian x UNIWEAR",
+        image: "src/assets/DaustianShoot/PHOTO-2026-01-31-23-01-01.jpg",
         slug: "winter",
     },
     {

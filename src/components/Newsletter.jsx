@@ -58,7 +58,7 @@ export default function Newsletter() {
                 <p className="text-green-600">Thanks for subscribing. Check your inbox soon!</p>
               </div>
             ) : (
-              <form className="sm:flex" onSubmit={handleSubmit}>
+              <form className="sm:flex" onSubmit={handleSubmit} noValidate>
                 <label htmlFor="email-address" className="sr-only">
                   Email address
                 </label>

@@ -15,6 +15,14 @@ import Checkout from "./pages/Checkout.jsx";
 import ProductDetails from "./pages/ProductDetails.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
+// Admin Imports
+import { AdminProvider } from "./context/AdminContext";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminLogin from "./pages/admin/Login";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminProducts from "./pages/admin/Products";
+import AdminOrders from "./pages/admin/Orders";
+
 export default function App() {
   useEffect(() => {
     AOS.init({ duration: 800, easing: "ease-in-out", once: true });
@@ -22,19 +30,31 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/collections/:slug" element={<Collection />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
+      <AdminProvider>
+        <Routes>
+          {/* Main Storefront Routes */}
+          <Route element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/collections/:slug" element={<Collection />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="orders" element={<AdminOrders />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
+        </Routes>
+      </AdminProvider>
     </ErrorBoundary>
   );
 }

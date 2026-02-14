@@ -5,6 +5,9 @@ import { useCart } from "../context/CartContext.jsx";
 import { Shield, ChevronLeft, Lock, Info, AlertCircle } from "lucide-react";
 import Button from "../components/ui/Button";
 
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+
 const fmt = (n) => `$${n.toFixed(2)}`;
 const SHEETS_URL = import.meta.env.VITE_SHEETS_WEBAPP_URL;
 const SECRET = import.meta.env.VITE_SHEETS_SECRET;
@@ -21,13 +24,14 @@ export default function Checkout() {
   const [error, setError] = useState("");
   const nav = useNavigate();
 
+  const addOrder = useMutation(api.orders.addOrder);
+
   const lines = useMemo(
     () =>
       items.map((it) => ({
         name: it.name,
         qty: it.qty,
-        unit: it.price,
-        line: it.price * it.qty,
+        price: it.price,
         color: it.selectedColor,
         size: it.selectedSize
       })),
@@ -54,35 +58,45 @@ export default function Checkout() {
       setError("Please ensure all fields are completed before proceeding.");
       return;
     }
-    if (!SHEETS_URL || !SECRET) {
-      setError("Our checkout system is currently offline for maintenance. Please reach out to campus support.");
-      return;
-    }
 
     setLoading(true);
     try {
-      const payload = {
-        secret: SECRET,
+      // 1. Save to Convex (Primary)
+      await addOrder({
         orderId,
         customer: {
           name: form.name,
           email: form.email,
           year: form.year,
         },
-        lines,
+        items: lines,
         subtotal,
         total,
-      };
-
-      const r = await fetch(SHEETS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
       });
 
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok || data?.ok === false) {
-        throw new Error(data?.error || "Failed to save order");
+      // 2. Optional: Sync to Sheets (Legacy Support)
+      if (SHEETS_URL && SECRET) {
+        try {
+          const payload = {
+            secret: SECRET,
+            orderId,
+            customer: {
+              name: form.name,
+              email: form.email,
+              year: form.year,
+            },
+            lines,
+            subtotal,
+            total,
+          };
+          fetch(SHEETS_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }).catch(err => console.warn("Google Sheets sync failed:", err));
+        } catch (e) {
+          // Silent fail for sheets, Convex is primary
+        }
       }
 
       clear();
@@ -94,6 +108,7 @@ export default function Checkout() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="bg-gray-50/50 min-h-screen pb-24 sm:pb-32 overflow-x-hidden">

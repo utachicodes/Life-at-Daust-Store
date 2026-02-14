@@ -100,6 +100,7 @@ export default function ProductCard({ product }) {
               addItem(product, 1);
             }}
             className="lg:hidden p-2 rounded-lg bg-gray-100 text-brand-navy active:bg-brand-navy active:text-white transition-all duration-200"
+            aria-label="Add to Cart"
           >
             <ShoppingCart className="h-5 w-5" />
           </button>

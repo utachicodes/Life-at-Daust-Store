@@ -5,7 +5,7 @@ import ProductCard from "../components/ProductCard.jsx";
 
 const HERO_IMAGES = {
   summer: "http://static.photos/fashion/1200x630/42",
-  winter: "http://static.photos/fashion/1200x630/41",
+  DaxUn: "src/assets/DaustianShoot/PHOTO-2026-01-31-23-01-01.jpg",
   limited: "http://static.photos/fashion/1200x630/40",
 };
 
@@ -15,15 +15,15 @@ export default function Collection() {
   const title =
     slug === "summer"
       ? "Summer Collection"
-      : slug === "winter"
-      ? "Winter Essentials"
-      : "Limited Edition";
+      : slug === "DaxUn"
+        ? "Daustian x UNIWEAR"
+        : "Limited Edition";
 
   const image = HERO_IMAGES[slug] || HERO_IMAGES.summer;
 
   const filtered = PRODUCTS.filter((p) => {
     if (slug === "limited") return p.badge?.toLowerCase().includes("limited");
-    if (slug === "winter") return ["Sweaters"].includes(p.category);
+    if (slug === "DaxUn") return ["Sweaters"].includes(p.category);
     return true;
   });
 

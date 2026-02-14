@@ -5,7 +5,7 @@ export const NAV_LINKS = [
     path: "#",
     dropdown: [
       { name: "Summer Collection", path: "/collections/summer" },
-      { name: "Winter Essentials", path: "/collections/winter" },
+      { name: "DAUSTIAN X UNIWEAR", path: "/collections/winter" },
       { name: "Limited Edition", path: "/collections/limited" },
     ],
   },
