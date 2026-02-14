@@ -1,7 +1,7 @@
 // src/pages/Checkout.jsx
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext.jsx";
+import { useCart } from "../context/CartContext.js";
 
 const fmt = (n) => `$${n.toFixed(2)}`;
 const SHEETS_URL = import.meta.env.VITE_SHEETS_WEBAPP_URL;
@@ -16,6 +16,7 @@ export default function Checkout() {
   const [orderId] = useState(makeOrderId());
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", year: "" });
+  const [error, setError] = useState("");
   const nav = useNavigate();
 
   const lines = useMemo(
@@ -39,12 +40,14 @@ export default function Checkout() {
 
   const submit = async (e) => {
     e.preventDefault();
+    setError("");
+
     if (!form.name || !form.email || !form.year) {
-      alert("Please fill your name, email, and year.");
+      setError("Please fill your name, email, and year.");
       return;
     }
     if (!SHEETS_URL || !SECRET) {
-      alert("Missing Sheets configuration. Set VITE_SHEETS_WEBAPP_URL and VITE_SHEETS_SECRET.");
+      setError("Checkout is currently unavailable. Please contact support.");
       return;
     }
 
@@ -56,13 +59,11 @@ export default function Checkout() {
         customer: {
           name: form.name,
           email: form.email,
-          year: form.year, // <- year instead of address
+          year: form.year,
         },
         lines,
         subtotal,
-        tax,
-        shipping,
-        total, // send the computed total if you use tax/shipping
+        total,
       };
 
       const r = await fetch(SHEETS_URL, {
@@ -80,7 +81,7 @@ export default function Checkout() {
       nav(`/order/success/${orderId}`, { state: { orderId } });
     } catch (err) {
       console.error(err);
-      alert("Could not place the order. Please try again.");
+      setError("Could not place the order. Please try again or check your connection.");
     } finally {
       setLoading(false);
     }
@@ -91,38 +92,56 @@ export default function Checkout() {
       <div>
         <h1 className="text-3xl font-bold text-brand-navy mb-6">Checkout</h1>
 
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={submit} className="space-y-4">
-          <input
-            className="w-full border rounded px-4 py-3"
-            placeholder="Full name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input
+              id="name"
+              className="w-full border rounded px-4 py-3 focus:ring-brand-orange focus:border-brand-orange outline-none transition"
+              placeholder="e.g. John Doe"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </div>
 
-          <input
-            className="w-full border rounded px-4 py-3"
-            placeholder="Email address"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+            <input
+              id="email"
+              className="w-full border rounded px-4 py-3 focus:ring-brand-orange focus:border-brand-orange outline-none transition"
+              placeholder="e.g. john@daust.edu"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </div>
 
-          <select
-            className="w-full border rounded px-4 py-3 bg-white"
-            value={form.year}
-            onChange={(e) => setForm({ ...form, year: e.target.value })}
-          >
-            <option value="">Select your year</option>
-            <option value="Freshman">Freshman</option>
-            <option value="Sophomore">Sophomore</option>
-            <option value="Junior">Junior</option>
-            <option value="Senior">Senior</option>
-          </select>
+          <div>
+            <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+            <select
+              id="year"
+              className="w-full border rounded px-4 py-3 bg-white focus:ring-brand-orange focus:border-brand-orange outline-none transition"
+              value={form.year}
+              onChange={(e) => setForm({ ...form, year: e.target.value })}
+            >
+              <option value="">Select your year</option>
+              <option value="Freshman">Freshman</option>
+              <option value="Sophomore">Sophomore</option>
+              <option value="Junior">Junior</option>
+              <option value="Senior">Senior</option>
+            </select>
+          </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand-navy text-white py-3 rounded hover:bg-brand-orange disabled:opacity-60"
+            className="w-full bg-brand-navy text-white py-4 rounded font-bold hover:bg-brand-orange transition disabled:opacity-60 mt-4 shadow-lg shadow-brand-navy/10"
           >
             {loading ? "Placing order..." : "Place Order"}
           </button>

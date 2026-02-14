@@ -11,6 +11,7 @@ import About from "./pages/About.jsx";
 import Contact from "./pages/Contact.jsx";
 import Cart from "./pages/Cart.jsx";
 import Checkout from "./pages/Checkout.jsx";
+import ProductDetails from "./pages/ProductDetails.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

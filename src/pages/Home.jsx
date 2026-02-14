@@ -1,7 +1,8 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Hero from "../components/Hero.jsx";
 import Newsletter from "../components/Newsletter.jsx";
-import { Link } from "react-router-dom";
+import { COLLECTIONS } from "../data/collections.js";
 
 export default function Home() {
   return (
@@ -20,23 +21,7 @@ export default function Home() {
           Featured Collections
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              title: "Summer Collection",
-              image: "http://static.photos/fashion/640x360/21",
-              slug: "summer",
-            },
-            {
-              title: "Winter Essentials",
-              image: "http://static.photos/fashion/640x360/22",
-              slug: "winter",
-            },
-            {
-              title: "Limited Edition",
-              image: "http://static.photos/fashion/640x360/23",
-              slug: "limited",
-            },
-          ].map((c) => (
+          {COLLECTIONS.map((c) => (
             <Link
               to={`/collections/${c.slug}`}
               key={c.slug}

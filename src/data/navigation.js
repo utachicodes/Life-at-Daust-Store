@@ -1,0 +1,14 @@
+export const NAV_LINKS = [
+  { name: "Shop", path: "/shop" },
+  {
+    name: "Collections",
+    path: "#",
+    dropdown: [
+      { name: "Summer Collection", path: "/collections/summer" },
+      { name: "Winter Essentials", path: "/collections/winter" },
+      { name: "Limited Edition", path: "/collections/limited" },
+    ],
+  },
+  { name: "About", path: "/about" },
+  { name: "Contact", path: "/contact" },
+];

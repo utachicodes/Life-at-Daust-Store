@@ -1,7 +1,5 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-
-const CartContext = createContext(null);
-export const useCart = () => useContext(CartContext);
+import React, { useEffect, useMemo, useState } from "react";
+import { CartContext } from "./CartContext.js";
 
 const STORAGE_KEY = "lifeAtDaust.cart.v1";
 

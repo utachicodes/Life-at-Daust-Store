@@ -1,12 +1,17 @@
-// src/pages/Shop.jsx
-import React, { useMemo, useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import ProductCard from "../components/ProductCard.jsx";
 import Newsletter from "../components/Newsletter.jsx";
-import { PRODUCTS, CATEGORIES } from "../data/products.js";
+import { PRODUCTS as STATIC_PRODUCTS, CATEGORIES } from "../data/products.js";
 
 export default function Shop() {
+  const convexProducts = useQuery(api.products.list);
   const [category, setCategory] = useState("All Categories");
   const [sort, setSort] = useState("Featured");
+
+  // Fallback to static data if Convex is not yet configured or loading
+  const PRODUCTS = convexProducts || STATIC_PRODUCTS;
 
   const items = useMemo(() => {
     const filtered = PRODUCTS.filter((p) =>

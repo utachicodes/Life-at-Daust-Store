@@ -1,32 +1,37 @@
 import React from "react";
 import { Heart, Star, ShoppingCart } from "react-feather";
-import { useCart } from "../context/CartContext.jsx";
+import { Link } from "react-router-dom";
+import { useCart } from "../context/CartContext.js";
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
 
   return (
     <div className="product-card bg-white rounded-lg overflow-hidden shadow-md">
-      <div className="relative">
-        <img
-          className="product-image w-full h-80 object-cover"
-          src={product.image}
-          alt={product.name}
-        />
+      <div className="relative group cursor-pointer">
+        <Link to={`/product/${product.id}`}>
+          <img
+            className="product-image w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"
+            src={product.image}
+            alt={product.name}
+          />
+        </Link>
         <div className="absolute top-2 right-2">
-          <button className="p-2 rounded-full bg-white shadow-md hover:bg-gray-100" aria-label="Wish">
-            <Heart className="h-5 w-5 text-gray-600" />
+          <button className="p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white hover:text-red-500 transition" aria-label="Wish">
+            <Heart className="h-5 w-5" />
           </button>
         </div>
         {product.badge && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-            <span className="text-white font-medium">{product.badge}</span>
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+            <span className="text-white font-bold text-xs uppercase tracking-widest">{product.badge}</span>
           </div>
         )}
       </div>
 
       <div className="p-4">
-        <h3 className="text-lg font-medium text-brand-navy">{product.name}</h3>
+        <Link to={`/product/${product.id}`} className="block group">
+          <h3 className="text-lg font-medium text-brand-navy group-hover:text-brand-orange transition truncate">{product.name}</h3>
+        </Link>
         <div className="mt-1 flex justify-between items-center">
           <p className="text-brand-navy font-bold">${product.price.toFixed(2)}</p>
           <div className="flex items-center">
@@ -38,8 +43,8 @@ export default function ProductCard({ product }) {
         <button
           onClick={() => addItem(product, 1)}
           className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 font-semibold shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/50 active:scale-[0.99] transition"
-          style={{ 
-            backgroundColor: '#0a2342', 
+          style={{
+            backgroundColor: '#0a2342',
             color: '#ffffff',
             border: 'none'
           }}
