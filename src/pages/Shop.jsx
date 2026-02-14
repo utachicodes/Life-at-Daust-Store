@@ -34,8 +34,15 @@ export default function Shop() {
     // Group by collection
     const groups = {};
 
+    // Sort collections: Daustian x Uniwear first, then others alphabetically
+    const sortedCollections = [...collections].sort((a, b) => {
+      if (a.name.toLowerCase().includes('daustian')) return -1;
+      if (b.name.toLowerCase().includes('daustian')) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
     // Add collections to groups to maintain order even if empty
-    collections.forEach(col => {
+    sortedCollections.forEach(col => {
       groups[col.name] = [];
     });
 
