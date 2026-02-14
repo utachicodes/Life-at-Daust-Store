@@ -10,11 +10,12 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 const fmt = (n) => formatPrice(n);
-const SHEETS_URL = import.meta.env.VITE_SHEETS_WEBAPP_URL;
-const SECRET = import.meta.env.VITE_SHEETS_SECRET;
 
 function makeOrderId() {
-  return "ORD-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+  // More secure: timestamp + random string
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `ORD-${timestamp}-${random}`;
 }
 
 export default function Checkout() {
@@ -62,7 +63,7 @@ export default function Checkout() {
 
     setLoading(true);
     try {
-      // 1. Save to Convex (Primary)
+      // Save order to Convex (includes automatic Google Sheets backup)
       await addOrder({
         orderId,
         customer: {
@@ -74,31 +75,6 @@ export default function Checkout() {
         subtotal,
         total,
       });
-
-      // 2. Optional: Sync to Sheets (Legacy Support)
-      if (SHEETS_URL && SECRET) {
-        try {
-          const payload = {
-            secret: SECRET,
-            orderId,
-            customer: {
-              name: form.name,
-              email: form.email,
-              year: form.year,
-            },
-            lines,
-            subtotal,
-            total,
-          };
-          fetch(SHEETS_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          }).catch(err => console.warn("Google Sheets sync failed:", err));
-        } catch (e) {
-          // Silent fail for sheets, Convex is primary
-        }
-      }
 
       clear();
       nav(`/order/success/${orderId}`, { state: { orderId } });

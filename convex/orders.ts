@@ -34,11 +34,43 @@ export const addOrder = mutation({
         total: v.number(),
     },
     handler: async (ctx, args) => {
+        // Save to Convex database
         const orderId = await ctx.db.insert("orders", {
             ...args,
             status: "Processing",
             createdAt: Date.now(),
         });
+
+        // Backup to Google Sheets (if configured)
+        const sheetsUrl = process.env.SHEETS_WEBAPP_URL;
+        const sheetsSecret = process.env.SHEETS_SECRET;
+
+        if (sheetsUrl && sheetsSecret) {
+            try {
+                const payload = {
+                    orderId: args.orderId,
+                    name: args.customer.name,
+                    email: args.customer.email,
+                    year: args.customer.year,
+                    items: args.items.map(item =>
+                        `${item.name} (x${item.qty})${item.color ? ` - ${item.color}` : ""}${item.size ? ` - ${item.size}` : ""}`
+                    ).join(", "),
+                    total: args.total,
+                    secret: sheetsSecret,
+                    timestamp: new Date().toISOString(),
+                };
+
+                await fetch(sheetsUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+            } catch (error) {
+                // Log but don't fail the order if sheets sync fails
+                console.error("Google Sheets backup failed:", error);
+            }
+        }
+
         return orderId;
     },
 });
