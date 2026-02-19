@@ -1,109 +1,98 @@
 import React, { useState } from "react";
-import { Heart, Star, ShoppingCart, Eye } from "lucide-react";
+import { Heart, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { formatPrice } from "../utils/format.js";
-import Button from "./ui/Button";
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const [isHovered, setIsHovered] = useState(false);
 
-  // If product has multiple images, show the second on hover
-  const displayImage = isHovered && product.images?.length > 1
-    ? product.images[1]
-    : product.image;
+  const displayImage =
+    isHovered && product.images?.length > 1
+      ? product.images[1]
+      : product.image;
 
   return (
     <div
-      className="product-card group relative bg-white rounded-xl overflow-hidden premium-shadow transition-all duration-500"
+      className="group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image Container */}
-      <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
-        <Link to={`/product/${product.id}`} className="block w-full h-full">
+      {/* Image */}
+      <div className="relative aspect-[3/4] overflow-hidden bg-brand-ivory rounded-lg mb-3">
+        <Link to={`/product/${product.id || product._id}`} className="block w-full h-full">
           <img
-            className={`w-full h-full object-cover transition-transform duration-700 ease-out ${isHovered ? 'scale-110' : 'scale-100'}`}
+            className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
+              isHovered ? "scale-[1.03]" : "scale-100"
+            }`}
             src={displayImage}
             alt={product.name}
             loading="lazy"
           />
         </Link>
 
-        {/* Wishlist Button */}
+        {/* Wishlist */}
         <button
-          className="absolute top-4 right-4 p-2.5 rounded-full glass-morphism text-brand-navy hover:text-red-500 transition-colors duration-300 z-10 interactive-scale"
+          className="absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm text-brand-navy/40 hover:text-red-500 transition-colors z-10"
           aria-label="Add to Wishlist"
         >
-          <Heart className="h-5 w-5" />
+          <Heart className="h-4 w-4" />
         </button>
 
         {/* Badge */}
         {product.badge && (
-          <div className="absolute top-4 left-4 z-10">
-            <span className="bg-brand-orange text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
+          <div className="absolute top-3 left-3 z-10">
+            <span className="bg-brand-orange text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
               {product.badge}
             </span>
           </div>
         )}
 
-        {/* Quick Add Overlay (Desktop) */}
-        <div className={`absolute inset-x-0 bottom-0 p-4 transition-all duration-300 translate-y-full group-hover:translate-y-0 hidden lg:block bg-gradient-to-t from-black/20 to-transparent z-20`}>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full glass-morphism border-none text-brand-navy font-black transition-all duration-300 shadow-lg"
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#0a2342';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#0a2342';
-            }}
+        {/* Quick Add - Desktop */}
+        <div
+          className={`absolute inset-x-3 bottom-3 transition-all duration-300 ${
+            isHovered
+              ? "translate-y-0 opacity-100"
+              : "translate-y-2 opacity-0"
+          } hidden lg:block`}
+        >
+          <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               addItem(product, 1);
             }}
+            className="w-full h-10 rounded-lg bg-white/90 backdrop-blur-sm text-brand-navy text-xs font-medium flex items-center justify-center gap-2 hover:bg-brand-navy hover:text-white transition-all duration-200 active:scale-[0.97]"
           >
-            <ShoppingCart className="h-4 w-4 mr-2" />
+            <ShoppingCart className="h-3.5 w-3.5" />
             Quick Add
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Info Container */}
-      <div className="p-5">
-        <div className="flex justify-between items-start mb-2">
-          <Link to={`/product/${product.id}`} className="block flex-1 mr-2">
-            <h3 className="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-brand-orange transition-colors duration-300 tracking-tight">
-              {product.name}
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">{product.category}</p>
-          </Link>
-          <div className="flex items-center bg-gray-50 px-2 py-1 rounded-md">
-            <Star className="h-3 w-3 text-yellow-400 fill-current" />
-            <span className="text-[10px] font-bold text-gray-700 ml-1">{product.rating}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-lg font-extrabold text-brand-navy tracking-tight">
+      {/* Info */}
+      <div>
+        <Link to={`/product/${product.id || product._id}`} className="block">
+          <h3 className="text-sm font-medium text-brand-navy line-clamp-1 group-hover:text-brand-orange transition-colors">
+            {product.name}
+          </h3>
+          <p className="text-xs text-brand-navy/35 mt-0.5">{product.category}</p>
+        </Link>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-sm font-semibold text-brand-navy">
             {formatPrice(product.price)}
           </p>
-
-          {/* Mobile Add to Cart (Visible on mobile, hidden on desktop hover) */}
+          {/* Mobile cart button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               addItem(product, 1);
             }}
-            className="lg:hidden p-2 rounded-lg bg-gray-100 text-brand-navy active:bg-brand-navy active:text-white transition-all duration-200"
+            className="lg:hidden p-2 rounded-md bg-brand-ivory text-brand-navy active:bg-brand-navy active:text-white transition-colors"
             aria-label="Add to Cart"
           >
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-4 w-4" />
           </button>
         </div>
       </div>

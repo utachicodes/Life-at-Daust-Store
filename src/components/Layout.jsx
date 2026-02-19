@@ -7,7 +7,7 @@ import { CartProvider } from "../context/CartContext.jsx";
 export default function Layout() {
   return (
     <CartProvider>
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-brand-cream flex flex-col">
         <Navbar />
         <main className="flex-1">
           <Outlet />

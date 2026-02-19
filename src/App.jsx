@@ -1,7 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Routes, Route } from "react-router-dom";
-import AOS from "aos";
-import "aos/dist/aos.css";
 
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import Layout from "./components/Layout.jsx";
@@ -15,7 +13,7 @@ import Checkout from "./pages/Checkout.jsx";
 import ProductDetails from "./pages/ProductDetails.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
-// Admin Imports
+// Admin
 import { AdminProvider } from "./context/AdminContext";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminLogin from "./pages/admin/Login";
@@ -25,15 +23,11 @@ import AdminCollections from "./pages/admin/Collections";
 import AdminOrders from "./pages/admin/Orders";
 
 export default function App() {
-  useEffect(() => {
-    AOS.init({ duration: 800, easing: "ease-in-out", once: true });
-  }, []);
-
   return (
     <ErrorBoundary>
       <AdminProvider>
         <Routes>
-          {/* Main Storefront Routes */}
+          {/* Storefront */}
           <Route element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="/shop" element={<Shop />} />
@@ -45,7 +39,7 @@ export default function App() {
             <Route path="/product/:id" element={<ProductDetails />} />
           </Route>
 
-          {/* Admin Routes */}
+          {/* Admin */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
