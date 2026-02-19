@@ -8,9 +8,8 @@ describe('Newsletter Component', () => {
     it('renders newsletter signup form', () => {
         renderWithProviders(<Newsletter />);
 
-        expect(screen.getByText(/stay updated/i)).toBeInTheDocument();
-        expect(screen.getByText(/subscribe to our newsletter/i)).toBeInTheDocument();
-        expect(screen.getByPlaceholderText(/enter your email/i)).toBeInTheDocument();
+        expect(screen.getByText(/stay ahead of/i)).toBeInTheDocument();
+        expect(screen.getByPlaceholderText(/your@email.com/i)).toBeInTheDocument();
     });
 
     it('shows error for empty email submission', async () => {
@@ -20,16 +19,14 @@ describe('Newsletter Component', () => {
         const button = screen.getByRole('button', { name: /subscribe/i });
         await user.click(button);
 
-        // HTML5 validation should prevent submission
-        const input = screen.getByPlaceholderText(/enter your email/i);
-        expect(input).toBeInvalid();
+        expect(screen.getByText(/email is required/i)).toBeInTheDocument();
     });
 
     it('shows error for invalid email format', async () => {
         const user = userEvent.setup();
         renderWithProviders(<Newsletter />);
 
-        const input = screen.getByPlaceholderText(/enter your email/i);
+        const input = screen.getByPlaceholderText(/your@email.com/i);
         const button = screen.getByRole('button', { name: /subscribe/i });
 
         await user.type(input, 'invalid-email');
@@ -44,14 +41,14 @@ describe('Newsletter Component', () => {
         const user = userEvent.setup();
         renderWithProviders(<Newsletter />);
 
-        const input = screen.getByPlaceholderText(/enter your email/i);
+        const input = screen.getByPlaceholderText(/your@email.com/i);
         const button = screen.getByRole('button', { name: /subscribe/i });
 
         await user.type(input, 'test@example.com');
         await user.click(button);
 
-        // Should show loading state
-        expect(screen.getByText(/subscribing/i)).toBeInTheDocument();
+        // Should show loading state (spinner in button)
+        expect(button).toBeDisabled();
 
         // Should show success message after delay
         await waitFor(() => {
@@ -63,7 +60,7 @@ describe('Newsletter Component', () => {
         const user = userEvent.setup();
         renderWithProviders(<Newsletter />);
 
-        const input = screen.getByPlaceholderText(/enter your email/i);
+        const input = screen.getByPlaceholderText(/your@email.com/i);
         await user.type(input, 'test@example.com');
         await user.click(screen.getByRole('button', { name: /subscribe/i }));
 
@@ -72,20 +69,21 @@ describe('Newsletter Component', () => {
         }, { timeout: 2000 });
 
         // Input should be cleared (success message replaces form)
-        expect(screen.queryByPlaceholderText(/enter your email/i)).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText(/your@email.com/i)).not.toBeInTheDocument();
     });
 
     it('disables input and button during submission', async () => {
         const user = userEvent.setup();
         renderWithProviders(<Newsletter />);
 
-        const input = screen.getByPlaceholderText(/enter your email/i);
+        const input = screen.getByPlaceholderText(/your@email.com/i);
         const button = screen.getByRole('button', { name: /subscribe/i });
 
         await user.type(input, 'test@example.com');
         await user.click(button);
 
-        // During loading state, button should show "Subscribing..."
-        expect(screen.getByText(/subscribing/i)).toBeInTheDocument();
+        // During loading state, button and input should be disabled
+        expect(button).toBeDisabled();
+        expect(input).toBeDisabled();
     });
 });

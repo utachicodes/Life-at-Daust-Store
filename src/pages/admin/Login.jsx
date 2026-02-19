@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link, Navigate } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
-import { Lock, ArrowRight, Shield } from "lucide-react";
+import { Lock, ArrowRight } from "lucide-react";
 import Button from "../../components/ui/Button";
+import logo from "../../assets/logo.png";
 
 export default function AdminLogin() {
     const [password, setPassword] = useState("");
@@ -23,76 +24,88 @@ export default function AdminLogin() {
         setLoading(true);
         setError("");
 
-        // Simulate delay
         setTimeout(() => {
             if (login(password)) {
                 navigate(from, { replace: true });
             } else {
-                setError("Invalid administrative password");
+                setError("Invalid password. Please try again.");
                 setLoading(false);
             }
-        }, 800);
+        }, 600);
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-[440px] animate-in fade-in zoom-in duration-500">
+        <div className="min-h-screen bg-brand-navy flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Premium Background Elements */}
+            <div className="absolute inset-0 dot-pattern opacity-[0.03] pointer-events-none" />
+            <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-brand-orange/10 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+            <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-white/5 rounded-full blur-[100px] pointer-events-none" />
+
+            <div className="relative z-10 w-full max-w-[440px] animate-fade-in-up">
+                {/* Logo & Header */}
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-navy text-white mb-6">
-                        <Shield size={32} />
+                    <div className="inline-flex items-center justify-center mb-6 p-4 bg-white/5 backdrop-blur-xl rounded-[2rem] border border-white/10 shadow-2xl">
+                        <img src={logo} alt="Life at DAUST" className="h-[70px] w-auto" />
                     </div>
-                    <h1 className="text-3xl font-black text-brand-navy tracking-tighter mb-2">Admin Portal</h1>
-                    <p className="text-gray-500 font-medium max-w-[280px] mx-auto">Access restricted to DAUST staff and administrators</p>
+                    <h1 className="text-3xl font-[900] text-white tracking-tight mb-3">Admin Portal</h1>
+                    <p className="text-white/40 text-sm font-medium tracking-wide">Secure access for authorized DAUST personnel</p>
                 </div>
 
-                <div className="bg-white rounded-[2rem] p-8 sm:p-10 shadow-2xl shadow-gray-200/50 border border-gray-100">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="password" className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">
-                                Security Password
+                {/* Login Card */}
+                <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-orange to-transparent opacity-50" />
+
+                    <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                        <div className="space-y-2.6">
+                            <label htmlFor="password" className="block text-[10px] font-[900] text-brand-orange uppercase tracking-[3px] ml-1">
+                                Security Key
                             </label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                            <div className="relative group/input">
+                                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 h-4 w-4 transition-colors group-focus-within/input:text-brand-orange" />
                                 <input
                                     id="password"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
-                                    placeholder="Enter admin password"
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-13 pr-5 py-5 text-white font-semibold text-sm placeholder-white/20 focus:bg-white/10 focus:border-brand-orange/50 focus:ring-4 focus:ring-brand-orange/10 transition-all outline-none"
+                                    placeholder="••••••••••••"
                                     required
                                 />
                             </div>
                         </div>
 
                         {error && (
-                            <p className="text-red-500 text-sm font-bold ml-1 animate-in slide-in-from-top-1 duration-200">
-                                {error}
-                            </p>
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 animate-shake">
+                                <p className="text-red-400 text-xs font-bold text-center">
+                                    {error}
+                                </p>
+                            </div>
                         )}
 
                         <Button
                             type="submit"
                             variant="primary"
                             size="lg"
-                            className="w-full rounded-2xl h-14 group"
+                            className="w-full rounded-2xl h-16 group bg-brand-orange hover:bg-orange-500 text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-brand-orange/20"
                             loading={loading}
                         >
-                            Verify Identity
-                            <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                            Authenticate
+                            <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
                     </form>
 
-                    <div className="mt-8 pt-6 border-t border-gray-50 text-center">
-                        <Link to="/" className="text-gray-400 hover:text-brand-orange text-xs font-bold uppercase tracking-widest transition-colors">
-                            ← Return to Store
+                    <div className="mt-8 pt-8 border-t border-white/5 text-center">
+                        <Link to="/" className="inline-flex items-center text-white/30 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">
+                            <span className="mr-2">←</span> Return to Shop
                         </Link>
                     </div>
                 </div>
 
-                <p className="text-center mt-10 text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">
-                    Life at DAUST © 2026 Admin Infrastructure
-                </p>
+                <div className="mt-12 text-center space-y-2">
+                    <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em] font-mono">
+                        Life at DAUST · V2.4.0
+                    </p>
+                </div>
             </div>
         </div>
     );

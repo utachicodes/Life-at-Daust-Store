@@ -155,7 +155,7 @@ export default function ProductDetails() {
                         {product.colors && product.colors.length > 0 && (
                             <div>
                                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
-                                    Select Color — <span className="text-brand-navy">{selectedColor?.name}</span>
+                                    Select Color · <span className="text-brand-navy">{selectedColor?.name}</span>
                                 </h3>
                                 <div className="flex gap-4">
                                     {product.colors.map((color) => (

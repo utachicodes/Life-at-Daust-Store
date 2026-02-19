@@ -1,18 +1,30 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery } from "convex/react";
+import { useLocation } from "react-router-dom";
 import { api } from "../../convex/_generated/api";
 import ProductCard from "../components/ProductCard.jsx";
 import Newsletter from "../components/Newsletter.jsx";
 import Hero from "../components/Hero.jsx";
 import Skeleton from "../components/ui/Skeleton.jsx";
 import { PRODUCTS as STATIC_PRODUCTS, CATEGORIES } from "../data/products.js";
-import { Filter, ChevronDown, X, LayoutGrid } from "lucide-react";
+import { Filter, ChevronDown, X, LayoutGrid, Search } from "lucide-react";
+import shopHero from "../assets/shop-hero.jpg";
 
 export default function Shop() {
+  const location = useLocation();
   const convexProducts = useQuery(api.products.list);
   const collections = useQuery(api.collections.list);
   const [category, setCategory] = useState("All Categories");
   const [sort, setSort] = useState("Featured");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Sync search query from URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get("q");
+    if (q) setSearchQuery(q);
+    else setSearchQuery("");
+  }, [location.search]);
 
   // Use Convex products if available and not empty, otherwise fallback to static data
   const PRODUCTS = (convexProducts && convexProducts.length > 0) ? convexProducts : STATIC_PRODUCTS;
@@ -21,9 +33,19 @@ export default function Shop() {
   const itemsByCollection = useMemo(() => {
     if (isLoading) return {};
 
-    const filtered = PRODUCTS.filter((p) =>
+    let filtered = PRODUCTS.filter((p) =>
       category === "All Categories" ? true : p.category === category
     );
+
+    // Filter by search query if present
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
+        p.category.toLowerCase().includes(q)
+      );
+    }
 
     // Apply sorting
     let sorted = [...filtered];
@@ -76,7 +98,7 @@ export default function Shop() {
         title="Global DAUST Collection"
         subtitle="Discover premium university apparel and essentials designed for the ambitious."
         cta="New Arrivals"
-        image="http://static.photos/fashion/1200x630/42"
+        image={shopHero}
         to="#products"
       />
 
@@ -129,16 +151,34 @@ export default function Shop() {
         </div>
 
         {/* Active Filters */}
-        {category !== "All Categories" && (
-          <div className="flex items-center gap-2 mb-8 animate-in fade-in duration-500">
+        {(category !== "All Categories" || searchQuery) && (
+          <div className="flex flex-wrap items-center gap-3 mb-8 animate-in fade-in duration-500">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mr-2">Filtered by:</span>
-            <button
-              onClick={() => setCategory("All Categories")}
-              className="flex items-center gap-2 bg-brand-orange/10 text-brand-orange px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-orange/20 transition-colors"
-            >
-              {category}
-              <X size={14} />
-            </button>
+
+            {category !== "All Categories" && (
+              <button
+                onClick={() => setCategory("All Categories")}
+                className="flex items-center gap-2 bg-brand-orange/10 text-brand-orange px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-orange/20 transition-colors"
+              >
+                Category: {category}
+                <X size={14} />
+              </button>
+            )}
+
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  const params = new URLSearchParams(location.search);
+                  params.delete("q");
+                  window.history.replaceState({}, '', `/shop${params.toString() ? '?' + params.toString() : ''}`);
+                }}
+                className="flex items-center gap-2 bg-brand-navy/5 text-brand-navy px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-navy/10 transition-colors"
+              >
+                Search: "{searchQuery}"
+                <X size={14} />
+              </button>
+            )}
           </div>
         )}
 

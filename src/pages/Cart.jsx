@@ -30,7 +30,7 @@ export default function Cart() {
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
         <div>
           <h1 className="text-[var(--text-4xl)] font-black text-brand-navy tracking-tighter mb-2">Shopping Bag</h1>
-          <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px]">Review your selection — {count} items</p>
+          <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px]">Review your selection · {count} items</p>
         </div>
         <Link to="/shop" className="text-gray-400 hover:text-brand-orange transition-colors text-sm font-bold flex items-center gap-2">
           ← Keep Browsing
