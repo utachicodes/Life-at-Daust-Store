@@ -20,19 +20,18 @@ const featuredProduct =
 const trendingProducts = [...PRODUCTS].sort((a, b) => b.rating - a.rating).slice(0, 8);
 
 const testimonials = [
-  { name: "Amadou D.", role: "CS, Class of 2026", text: "The hoodie quality is unreal — I wear mine almost every day. Everyone asks where I got it." },
+  { name: "Amadou D.", role: "CS, Class of 2026", text: "The hoodie quality is unreal. I wear mine almost every day. Everyone asks where I got it." },
   { name: "Fatou S.", role: "EE, Class of 2025", text: "Ordered the ELEC Engineer tee and it fit perfectly. The print has held up through dozens of washes." },
   { name: "Moussa K.", role: "Proud Parent", text: "Bought the Proud Parent hoodie for my wife and she absolutely loves it. Thoughtful design." },
   { name: "Aïda B.", role: "Business, Class of 2027", text: "Finally campus merch I'm proud to wear off-campus too. The quality is genuinely premium." },
   { name: "Omar T.", role: "Alumni, Class of 2024", text: "Ordered three hoodies for graduation week. They arrived on time and looked amazing in photos." },
-  { name: "Rama N.", role: "CS, Class of 2026", text: "The limited edition drop sold out fast — glad I caught it. Wearing it at every hackathon now." },
+  { name: "Rama N.", role: "CS, Class of 2026", text: "The limited edition drop sold out fast. Glad I caught it. Wearing it at every hackathon now." },
 ];
 
 const STRIP_ITEMS = [
   "New Drops",
   "Campus Delivery",
   "Premium Quality",
-  "Est. 2023",
   "Daustian Pride",
   "Limited Edition",
   "Student Designed",
@@ -162,7 +161,7 @@ function TestimonialMarquee() {
         </div>
       </div>
 
-      {/* Row 1 – left to right */}
+      {/* Row 1 · left to right */}
       <div className="overflow-hidden -mx-4 sm:-mx-6 lg:-mx-8 mb-4">
         <div className="flex animate-marquee" style={{ width: "max-content" }}>
           {doubled1.map((t, i) => <TestimonialCard key={i} t={t} />)}

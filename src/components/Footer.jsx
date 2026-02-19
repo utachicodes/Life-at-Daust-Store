@@ -40,7 +40,7 @@ function FooterLink({ label, to, href }) {
 function FooterColumn({ title, links }) {
   return (
     <div>
-      <h4 className="text-[10px] font-[900] text-white/25 uppercase tracking-[0.22em] mb-5">
+      <h4 className="text-[11px] font-[800] text-white tracking-[0.15em] mb-6">
         {title}
       </h4>
       <ul className="space-y-3">
@@ -64,12 +64,7 @@ export default function Footer() {
         {/* Brand header row */}
         <div className="py-10 sm:py-14 border-b border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <img src={logo} alt="Life at DAUST" className="h-[80px] w-auto object-contain flex-shrink-0" />
-            <div>
-              <p className="text-white/30 text-xs font-[600] tracking-widest mt-0.5 uppercase">
-                Est. 2023 · Dakar
-              </p>
-            </div>
+            <img src={logo} alt="Life at DAUST" className="h-[120px] w-auto object-contain flex-shrink-0" />
           </div>
           <p className="text-white/35 text-sm leading-relaxed max-w-xs">
             Campus apparel and essentials made for and by the DAUST community.
@@ -84,8 +79,8 @@ export default function Footer() {
 
           {/* Social column */}
           <div>
-            <h4 className="text-[10px] font-[900] text-white/25 uppercase tracking-[0.22em] mb-5">
-              Follow Us
+            <h4 className="text-[11px] font-[800] text-white tracking-[0.15em] mb-6">
+              Connect
             </h4>
             <div className="flex gap-2.5">
               {SOCIALS.map(({ Icon, label, href }) => (
@@ -106,8 +101,8 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="py-5 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-white/20 text-xs font-[500]">
-            &copy; 2026 Life at DAUST. All rights reserved.
+          <p className="text-white/30 text-xs font-medium">
+            &copy; {new Date().getFullYear()} Life at DAUST Store. Handcrafted with pride in Dakar.
           </p>
           <div className="flex gap-5">
             {["Privacy Policy", "Terms of Service", "Cookie Policy"].map(l => (

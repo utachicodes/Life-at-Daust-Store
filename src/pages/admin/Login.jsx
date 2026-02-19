@@ -35,72 +35,77 @@ export default function AdminLogin() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            {/* Background pattern */}
-            <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-brand-orange/5 rounded-full blur-[100px]" />
-                <div className="absolute bottom-[-20%] left-[-10%] w-[400px] h-[400px] bg-brand-navy/5 rounded-full blur-[100px]" />
-            </div>
+        <div className="min-h-screen bg-brand-navy flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Premium Background Elements */}
+            <div className="absolute inset-0 dot-pattern opacity-[0.03] pointer-events-none" />
+            <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-brand-orange/10 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+            <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-white/5 rounded-full blur-[100px] pointer-events-none" />
 
-            <div className="relative z-10 w-full max-w-[420px] animate-fade-in-up">
+            <div className="relative z-10 w-full max-w-[440px] animate-fade-in-up">
                 {/* Logo & Header */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center mb-5">
-                        <img src={logo} alt="Life at DAUST" className="h-14 w-auto" />
+                <div className="text-center mb-10">
+                    <div className="inline-flex items-center justify-center mb-6 p-4 bg-white/5 backdrop-blur-xl rounded-[2rem] border border-white/10 shadow-2xl">
+                        <img src={logo} alt="Life at DAUST" className="h-[70px] w-auto brightness-0 invert" />
                     </div>
-                    <h1 className="text-2xl font-[900] text-brand-navy tracking-tight mb-2">Admin Access</h1>
-                    <p className="text-gray-400 text-sm">Restricted to DAUST staff only</p>
+                    <h1 className="text-3xl font-[900] text-white tracking-tight mb-3">Admin Portal</h1>
+                    <p className="text-white/40 text-sm font-medium tracking-wide">Secure access for authorized DAUST personnel</p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white rounded-2xl p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div>
-                            <label htmlFor="password" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                Password
+                <div className="bg-white/5 backdrop-blur-2xl rounded-[2.5rem] p-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand-orange to-transparent opacity-50" />
+
+                    <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+                        <div className="space-y-2.6">
+                            <label htmlFor="password" className="block text-[10px] font-[900] text-brand-orange uppercase tracking-[3px] ml-1">
+                                Security Key
                             </label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 h-4 w-4" />
+                            <div className="relative group/input">
+                                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 h-4 w-4 transition-colors group-focus-within/input:text-brand-orange" />
                                 <input
                                     id="password"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-11 pr-4 py-3.5 text-brand-navy font-medium text-sm focus:bg-white transition-all"
-                                    placeholder="Enter admin password"
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-13 pr-5 py-5 text-white font-semibold text-sm placeholder-white/20 focus:bg-white/10 focus:border-brand-orange/50 focus:ring-4 focus:ring-brand-orange/10 transition-all outline-none"
+                                    placeholder="••••••••••••"
                                     required
                                 />
                             </div>
                         </div>
 
                         {error && (
-                            <p className="text-red-500 text-sm font-medium animate-fade-in">
-                                {error}
-                            </p>
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 animate-shake">
+                                <p className="text-red-400 text-xs font-bold text-center">
+                                    {error}
+                                </p>
+                            </div>
                         )}
 
                         <Button
                             type="submit"
                             variant="primary"
                             size="lg"
-                            className="w-full rounded-xl h-12 group"
+                            className="w-full rounded-2xl h-16 group bg-brand-orange hover:bg-orange-500 text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-brand-orange/20"
                             loading={loading}
                         >
-                            Sign In
-                            <ArrowRight size={16} className="ml-1.5 group-hover:translate-x-0.5 transition-transform" />
+                            Authenticate
+                            <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
                     </form>
 
-                    <div className="mt-6 pt-5 border-t border-gray-50 text-center">
-                        <Link to="/" className="text-gray-400 hover:text-brand-orange text-xs font-semibold transition-colors">
-                            ← Back to store
+                    <div className="mt-8 pt-8 border-t border-white/5 text-center">
+                        <Link to="/" className="inline-flex items-center text-white/30 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all">
+                            <span className="mr-2">←</span> Return to Shop
                         </Link>
                     </div>
                 </div>
 
-                <p className="text-center mt-8 text-[10px] text-gray-300 font-medium tracking-wider">
-                    Life at DAUST © 2026
-                </p>
+                <div className="mt-12 text-center space-y-2">
+                    <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em] font-mono">
+                        Life at DAUST · V2.4.0
+                    </p>
+                </div>
             </div>
         </div>
     );

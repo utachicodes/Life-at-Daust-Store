@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Mail, ArrowRight, CheckCircle, Sparkles } from "lucide-react";
 
 export default function Newsletter() {
-  const [email, setEmail]   = useState("");
+  const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
-  const [error, setError]   = useState("");
+  const [error, setError] = useState("");
 
   const validate = (val) => {
     if (!val.trim()) return "Email is required";
@@ -37,10 +37,6 @@ export default function Newsletter() {
 
           {/* Left copy */}
           <div className="lg:w-1/2">
-            <div className="inline-flex items-center gap-2 text-brand-orange text-[10px] font-[900] uppercase tracking-[0.22em] mb-5">
-              <Sparkles size={13} />
-              Newsletter
-            </div>
             <h2 className="text-3xl sm:text-[2.8rem] font-[900] text-white tracking-[-0.03em] leading-[1.1] mb-4">
               Stay ahead of<br />every drop.
             </h2>
