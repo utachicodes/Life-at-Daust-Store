@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { ArrowRight, ChevronLeft, ChevronRight, Quote, Star, Zap } from "lucide-react";
+import { useMemo } from "react";
 import Hero from "../components/Hero.jsx";
 import Newsletter from "../components/Newsletter.jsx";
 import ProductCard from "../components/ProductCard.jsx";
@@ -11,13 +12,6 @@ import Button from "../components/ui/Button.jsx";
 import { PRODUCTS } from "../data/products.js";
 
 /* ─── Data ─────────────────────────────────────────────────── */
-
-const featuredProduct =
-  PRODUCTS.find(p => p.category === "Hoodies" && p.rating >= 4.8) ||
-  PRODUCTS.find(p => p.category === "Hoodies") ||
-  PRODUCTS[0];
-
-const trendingProducts = [...PRODUCTS].sort((a, b) => b.rating - a.rating).slice(0, 8);
 
 const testimonials = [
   { name: "Amadou D.", role: "CS, Class of 2026", text: "The hoodie quality is unreal. I wear mine almost every day. Everyone asks where I got it." },
@@ -181,8 +175,23 @@ function TestimonialMarquee() {
 /* ─── Main Component ─────────────────────────────────────────── */
 
 export default function Home() {
+  const convexProducts = useQuery(api.products.list);
   const collections = useQuery(api.collections.list);
   const scrollRef = useRef(null);
+
+  // Sync products with Convex if available
+  const PRODUCTS_DATA = (convexProducts && convexProducts.length > 0) ? convexProducts : PRODUCTS;
+
+  // Derive featured and trending from the current data source
+  const featuredProduct = useMemo(() => {
+    return PRODUCTS_DATA.find(p => p.category === "Hoodies" && p.rating >= 4.8) ||
+      PRODUCTS_DATA.find(p => p.category === "Hoodies") ||
+      PRODUCTS_DATA[0];
+  }, [PRODUCTS_DATA]);
+
+  const trendingProducts = useMemo(() => {
+    return [...PRODUCTS_DATA].sort((a, b) => b.rating - a.rating).slice(0, 8);
+  }, [PRODUCTS_DATA]);
 
   const collectionsRef = useReveal(0.08);
   const spotlightRef = useReveal(0.1);
@@ -237,7 +246,7 @@ export default function Home() {
               ))
             ) : (
               ["Hoodies", "T-Shirts", "Caps", "Drinkware"].map((cat, i) => {
-                const p = PRODUCTS.find(p => p.category === cat);
+                const p = PRODUCTS_DATA.find(p => p.category === cat);
                 return p ? (
                   <CollectionCard
                     key={cat}
@@ -302,7 +311,7 @@ export default function Home() {
                 <span className="text-sm font-[700] text-gray-400">{featuredProduct.rating} / 5</span>
               </div>
 
-              <Link to={`/product/${featuredProduct.id}`}>
+              <Link to={`/product/${featuredProduct._id || featuredProduct.id}`}>
                 <Button variant="primary" size="lg" className="rounded-full group gap-2.5 pr-5">
                   Shop Now
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
@@ -350,7 +359,7 @@ export default function Home() {
             >
               {trendingProducts.map(product => (
                 <div
-                  key={product.id}
+                  key={product._id || product.id}
                   className="min-w-[260px] sm:min-w-[280px] max-w-[280px] snap-start flex-shrink-0"
                 >
                   <ProductCard product={product} />

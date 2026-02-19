@@ -16,6 +16,8 @@ export default function ProductCard({ product }) {
     ? product.images[1]
     : product.image;
 
+  const productId = product._id || product.id;
+
   return (
     <div
       className="product-card group relative bg-white rounded-xl overflow-hidden premium-shadow transition-all duration-500"
@@ -24,7 +26,7 @@ export default function ProductCard({ product }) {
     >
       {/* Image Container */}
       <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
-        <Link to={`/product/${product.id}`} className="block w-full h-full">
+        <Link to={`/product/${productId}`} className="block w-full h-full">
           <img
             className={`w-full h-full object-cover transition-transform duration-700 ease-out ${isHovered ? 'scale-110' : 'scale-100'}`}
             src={displayImage}
@@ -40,11 +42,11 @@ export default function ProductCard({ product }) {
             e.stopPropagation();
             toggleWishlist(product);
           }}
-          className={`absolute top-4 right-4 p-2.5 rounded-full glass-morphism transition-all duration-300 z-10 interactive-scale ${isInWishlist(product.id) ? "text-red-500 bg-red-50/50" : "text-brand-navy hover:text-red-500"
+          className={`absolute top-3 right-3 sm:top-4 sm:right-4 p-2 sm:p-2.5 rounded-full glass-morphism transition-all duration-300 z-10 interactive-scale ${isInWishlist(productId) ? "text-red-500 bg-red-50/50" : "text-brand-navy hover:text-red-500"
             }`}
-          aria-label={isInWishlist(product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
+          aria-label={isInWishlist(productId) ? "Remove from Wishlist" : "Add to Wishlist"}
         >
-          <Heart className={`h-5 w-5 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
+          <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isInWishlist(productId) ? "fill-current" : ""}`} />
         </button>
 
         {/* Badge */}
@@ -83,22 +85,22 @@ export default function ProductCard({ product }) {
       </div>
 
       {/* Info Container */}
-      <div className="p-5">
-        <div className="flex justify-between items-start mb-2">
-          <Link to={`/product/${product.id}`} className="block flex-1 mr-2">
-            <h3 className="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-brand-orange transition-colors duration-300 tracking-tight">
+      <div className="p-3 sm:p-5">
+        <div className="flex justify-between items-start mb-1 sm:mb-2">
+          <Link to={`/product/${productId}`} className="block flex-1 mr-2">
+            <h3 className="text-xs sm:text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-brand-orange transition-colors duration-300 tracking-tight">
               {product.name}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">{product.category}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">{product.category}</p>
           </Link>
-          <div className="flex items-center bg-gray-50 px-2 py-1 rounded-md">
-            <Star className="h-3 w-3 text-yellow-400 fill-current" />
-            <span className="text-[10px] font-bold text-gray-700 ml-1">{product.rating}</span>
+          <div className="flex items-center bg-gray-50 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md">
+            <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-yellow-400 fill-current" />
+            <span className="text-[9px] sm:text-[10px] font-bold text-gray-700 ml-1">{product.rating}</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-lg font-extrabold text-brand-navy tracking-tight">
+        <div className="flex items-center justify-between mt-3 sm:mt-4">
+          <p className="text-sm sm:text-lg font-extrabold text-brand-navy tracking-tight">
             {formatPrice(product.price)}
           </p>
 

@@ -6,15 +6,17 @@ import { api } from "../../convex/_generated/api";
 import { PRODUCTS } from "../data/products";
 import { useCart } from "../context/CartContext.jsx";
 import { formatPrice } from "../utils/format.js";
+import { useWishlist } from "../context/WishlistContext";
 import Button from "../components/ui/Button";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 export default function ProductDetails() {
     const { id } = useParams();
     const { addItem } = useCart();
+    const { toggleWishlist, isInWishlist } = useWishlist();
 
-    // Determine if this looks like a Convex ID (longer strings)
-    const isConvexId = typeof id === "string" && id.length > 10;
+    // Determine if this looks like a Convex ID (longer strings or specific format)
+    const isConvexId = typeof id === "string" && (id.length > 20 || id.includes(":"));
 
     // Only query Convex if ID looks like a Convex ID
     const convexProduct = useQuery(
@@ -26,13 +28,18 @@ export default function ProductDetails() {
     const product = useMemo(() => {
         if (convexProduct) return convexProduct;
 
+        // Don't fall back to static data if we are still waiting for a valid Convex query
+        if (isConvexId && convexProduct === undefined) return null;
+
         // Handle numeric IDs for static products
         const numericId = parseInt(id);
         if (!isNaN(numericId)) {
             return PRODUCTS.find(p => p.id === numericId);
         }
-        return null;
-    }, [id, convexProduct]);
+
+        // Also check if id is a string matching static product (if any)
+        return PRODUCTS.find(p => p.id === id) || null;
+    }, [id, convexProduct, isConvexId]);
 
     const [mainImage, setMainImage] = useState(null);
     const [selectedColor, setSelectedColor] = useState(null);
@@ -259,10 +266,14 @@ export default function ProductDetails() {
 
                             {/* Wishlist Button */}
                             <button
-                                className="w-16 h-16 rounded-2xl border-2 border-gray-100 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all duration-300 interactive-scale"
-                                aria-label="Add to Wishlist"
+                                onClick={() => toggleWishlist(product)}
+                                className={`w-16 h-16 rounded-2xl border-2 flex items-center justify-center transition-all duration-300 interactive-scale ${isInWishlist(product._id || product.id)
+                                        ? "text-red-500 bg-red-50 border-red-100"
+                                        : "text-gray-400 border-gray-100 hover:text-red-500 hover:bg-red-50 hover:border-red-100"
+                                    }`}
+                                aria-label={isInWishlist(product._id || product.id) ? "Remove from Wishlist" : "Add to Wishlist"}
                             >
-                                <Heart size={24} />
+                                <Heart size={24} className={isInWishlist(product._id || product.id) ? "fill-current" : ""} />
                             </button>
                         </div>
 

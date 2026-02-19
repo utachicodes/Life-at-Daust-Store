@@ -126,10 +126,10 @@ export default function Collection() {
       {/* Products Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12 sm:gap-x-10 sm:gap-y-20">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-10 sm:gap-y-20">
             {filteredProducts.map((p, idx) => (
               <div
-                key={p.id}
+                key={p._id || p.id}
                 className="animate-fade-in-up"
                 style={{ animationDelay: `${(idx % 4) * 100}ms` }}
               >

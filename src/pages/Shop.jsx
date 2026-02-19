@@ -218,7 +218,7 @@ export default function Shop() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-8 sm:gap-x-8 sm:gap-y-12">
                   {products.map((p) => (
                     <ProductCard key={p.id} product={p} />
                   ))}
