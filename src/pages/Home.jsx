@@ -229,7 +229,7 @@ export default function Home() {
 
       {/* 1 ── HERO ── */}
       <Hero
-        title="Life at DAUST"
+        title="Welcome to the Life At Daust Store"
         subtitle="Campus apparel and essentials — designed by students, made for the DAUST community."
         cta="Shop Collection"
         image="/assets/DaustianShoot/Homepage.jpg"
