@@ -1,65 +1,98 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Facebook, Twitter, Instagram } from "lucide-react";
-import logo from "../assets/logo.png";
 
 export default function Footer() {
   return (
     <footer className="bg-brand-navy text-white">
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <img src={logo} alt="Life at DAUST" className="h-9 w-9" />
-              <h3 className="text-lg font-bold">LIFE AT DAUST</h3>
-            </div>
-            <p className="text-white/80 text-sm">
-              Apparel & essentials inspired by campus life and community.
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16">
+          {/* Brand */}
+          <div className="md:col-span-4">
+            <h3 className="font-serif text-xl mb-4">Life at DAUST</h3>
+            <p className="text-white/50 text-sm leading-relaxed max-w-xs">
+              Apparel and essentials inspired by campus life, designed for the DAUST community.
             </p>
-            <div className="mt-4 flex space-x-4">
-              <a href="#" className="text-white/70 hover:text-brand-orange"><Facebook className="h-5 w-5" /></a>
-              <a href="#" className="text-white/70 hover:text-brand-orange"><Twitter className="h-5 w-5" /></a>
-              <a href="#" className="text-white/70 hover:text-brand-orange"><Instagram className="h-5 w-5" /></a>
-            </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-4">Shop</h3>
-            <ul className="space-y-2">
-              <li><Link to="/shop" className="text-white/70 hover:text-brand-orange">All Products</Link></li>
-              <li><Link to="/collections/summer" className="text-white/70 hover:text-brand-orange">New Arrivals</Link></li>
-              <li><Link to="/collections/limited" className="text-white/70 hover:text-brand-orange">Best Sellers</Link></li>
-              <li><a href="#" className="text-white/70 hover:text-brand-orange">Sale</a></li>
+          {/* Shop */}
+          <div className="md:col-span-2">
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/35 mb-5">
+              Shop
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/shop" className="text-sm text-white/60 hover:text-brand-orange transition-colors">
+                  All Products
+                </Link>
+              </li>
+              <li>
+                <Link to="/collections/summer" className="text-sm text-white/60 hover:text-brand-orange transition-colors">
+                  New Arrivals
+                </Link>
+              </li>
+              <li>
+                <Link to="/collections/limited" className="text-sm text-white/60 hover:text-brand-orange transition-colors">
+                  Best Sellers
+                </Link>
+              </li>
             </ul>
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-4">Company</h3>
-            <ul className="space-y-2">
-              <li><Link to="/about" className="text-white/70 hover:text-brand-orange">About Us</Link></li>
-              <li><a href="#" className="text-white/70 hover:text-brand-orange">Sustainability</a></li>
-              <li><a href="#" className="text-white/70 hover:text-brand-orange">Careers</a></li>
-              <li><a href="#" className="text-white/70 hover:text-brand-orange">Press</a></li>
+          {/* Company */}
+          <div className="md:col-span-2">
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/35 mb-5">
+              Company
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/about" className="text-sm text-white/60 hover:text-brand-orange transition-colors">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-sm text-white/60 hover:text-brand-orange transition-colors">
+                  Contact
+                </Link>
+              </li>
             </ul>
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider mb-4">Support</h3>
-            <ul className="space-y-2">
-              <li><Link to="/contact" className="text-white/70 hover:text-brand-orange">Contact Us</Link></li>
-              <li><a href="#" className="text-white/70 hover:text-brand-orange">FAQs</a></li>
-              <li><a href="#" className="text-white/70 hover:text-brand-orange">Shipping & Returns</a></li>
-              <li><a href="#" className="text-white/70 hover:text-brand-orange">Size Guide</a></li>
+          {/* Support */}
+          <div className="md:col-span-2">
+            <h4 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-white/35 mb-5">
+              Support
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/contact" className="text-sm text-white/60 hover:text-brand-orange transition-colors">
+                  Help Center
+                </Link>
+              </li>
+              <li>
+                <a href="#" className="text-sm text-white/60 hover:text-brand-orange transition-colors">
+                  Shipping Info
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-sm text-white/60 hover:text-brand-orange transition-colors">
+                  Size Guide
+                </a>
+              </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-white/70 text-sm">&copy; 2025 Life at DAUST. All rights reserved.</p>
-          <div className="mt-4 md:mt-0 flex space-x-6">
-            <a href="#" className="text-white/70 hover:text-brand-orange text-sm">Privacy Policy</a>
-            <a href="#" className="text-white/70 hover:text-brand-orange text-sm">Terms of Service</a>
-            <a href="#" className="text-white/70 hover:text-brand-orange text-sm">Cookie Policy</a>
+        <div className="mt-16 pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-white/35 text-xs">
+            &copy; {new Date().getFullYear()} Life at DAUST. All rights reserved.
+          </p>
+          <div className="flex gap-6">
+            <a href="#" className="text-white/35 hover:text-white/60 text-xs transition-colors">
+              Privacy
+            </a>
+            <a href="#" className="text-white/35 hover:text-white/60 text-xs transition-colors">
+              Terms
+            </a>
           </div>
         </div>
       </div>

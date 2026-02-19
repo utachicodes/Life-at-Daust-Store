@@ -1,4 +1,3 @@
-// src/components/Hero.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import Button from "./ui/Button";
@@ -6,61 +5,60 @@ import Button from "./ui/Button";
 export default function Hero({
   title,
   subtitle,
-  cta,        // string for the button label (optional)
-  to = "/",   // route for the CTA (optional)
-  image,      // background image url
-  align = "left", // "left" | "center"
+  cta,
+  to = "/",
+  image,
+  align = "left",
 }) {
-  const alignMap = {
-    left: "items-start text-left",
-    center: "items-center text-center",
-  };
-
   return (
-    <section className="relative min-h-[70vh] flex items-center bg-brand-navy overflow-hidden">
-      {/* Background image */}
-      <div className="absolute inset-0 z-0">
-        {image && (
-          <img
-            src={image}
-            alt=""
-            className="w-full h-full object-cover opacity-60 scale-105"
-            decoding="async"
-          />
-        )}
-        {/* Advanced Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/90 via-brand-navy/40 to-transparent" />
-      </div>
+    <section className="relative bg-brand-cream overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-h-[60vh] lg:min-h-[70vh]">
+          {/* Left Content */}
+          <div className="flex flex-col justify-center py-16 lg:py-24 lg:pr-16">
+            {title && (
+              <h1
+                className="font-serif text-[var(--text-display)] text-brand-navy leading-[1.05] tracking-tight text-balance mb-6 animate-fade-in-up"
+              >
+                {title}
+              </h1>
+            )}
 
-      {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 w-full">
-        <div className={`flex flex-col gap-8 ${alignMap[align]}`}>
-          {title && (
-            <h1 className="text-[var(--text-5xl)] font-black tracking-tighter text-white max-w-4xl leading-[1.1]">
-              {title}
-            </h1>
-          )}
+            {subtitle && (
+              <p
+                className="text-lg text-brand-navy/60 leading-relaxed max-w-lg mb-10"
+                style={{ animationDelay: "0.1s" }}
+              >
+                {subtitle}
+              </p>
+            )}
 
-          {subtitle && (
-            <p className="text-[var(--text-xl)] text-brand-cream/80 font-medium leading-relaxed">
-              {subtitle}
-            </p>
-          )}
+            {cta && (
+              <div style={{ animationDelay: "0.2s" }}>
+                <Link to={to}>
+                  <Button variant="primary" size="lg">
+                    {cta}
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
 
-          {cta && (
-            <div className={align === "center" ? "mx-auto" : ""}>
-              <Link to={to}>
-                <Button variant="primary" size="lg" className="rounded-full shadow-2xl hover:scale-105">
-                  {cta}
-                </Button>
-              </Link>
-            </div>
-          )}
+          {/* Right Image */}
+          <div className="relative hidden lg:block">
+            {image && (
+              <div className="absolute inset-0 -right-8">
+                <img
+                  src={image}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  decoding="async"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Decorative pulse */}
-      <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-brand-orange/20 rounded-full blur-[120px] animate-pulse" />
     </section>
   );
 }
