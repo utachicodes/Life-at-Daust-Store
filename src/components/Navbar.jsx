@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Search, X, ShoppingBag, ChevronDown } from "lucide-react";
 import { useCart } from "../context/CartContext.jsx";
 import { useQuery } from "convex/react";
@@ -8,6 +8,7 @@ import logo from "../assets/logo.png";
 import { NAV_LINKS } from "../data/navigation.js";
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const { count } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -105,7 +106,7 @@ export default function Navbar() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   const q = e.target.q.value.trim();
-                  if (q) window.location.href = `/shop?q=${encodeURIComponent(q)}`;
+                  if (q) navigate(`/shop?q=${encodeURIComponent(q)}`);
                 }}
                 className="hidden xl:flex items-center bg-gray-50/50 border border-gray-100 rounded-full px-5 py-2.5 w-64 focus-within:ring-4 focus-within:ring-brand-orange/5 focus-within:border-brand-orange/40 transition-all duration-500"
               >
