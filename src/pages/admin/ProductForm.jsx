@@ -182,71 +182,71 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
     };
 
     return (
-        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
-            <div className="p-8 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
+        <div className="bg-white rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+            <div className="p-4 md:p-8 border-b border-gray-50 flex justify-between items-center sticky top-0 bg-white z-10">
                 <div>
-                    <h2 className="text-xl font-black text-brand-navy">{product ? "Edit Product" : "Add New Product"}</h2>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{product ? `Editing ID: ${product._id}` : "Enter product details"}</p>
+                    <h2 className="text-lg md:text-xl font-black text-brand-navy">{product ? "Edit Product" : "Add New Product"}</h2>
+                    <p className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest">{product ? `Editing ID: ${product._id}` : "Enter product details"}</p>
                 </div>
                 <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <X size={24} className="text-gray-400" />
+                    <X size={20} className="text-gray-400" />
                 </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 space-y-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-6 md:space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-12">
+                    <div className="space-y-4 md:space-y-6">
                         <div>
-                            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Product Name</label>
+                            <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Product Name</label>
                             <input
                                 type="text"
                                 required
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
+                                className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
                                 placeholder="DAUST Varsity Jacket"
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3 md:gap-4">
                             <div>
-                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Category</label>
+                                <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Category</label>
                                 <select
                                     value={formData.category}
                                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all appearance-none"
+                                    className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all appearance-none"
                                 >
                                     {categories.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Price (XOF)</label>
+                                <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Price (XOF)</label>
                                 <input
                                     type="number"
                                     step="100"
                                     required
                                     value={formData.price}
                                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
+                                    className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
                                     placeholder="7500"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Description</label>
+                            <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Description</label>
                             <textarea
-                                rows="4"
+                                rows="3"
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all resize-none"
+                                className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all resize-none"
                                 placeholder="Tell the story of this product..."
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3 md:gap-4">
                             <div>
-                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Rating</label>
+                                <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Rating</label>
                                 <input
                                     type="number"
                                     step="0.1"
@@ -254,27 +254,27 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                     max="5"
                                     value={formData.rating}
                                     onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
+                                    className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Badge</label>
+                                <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Badge</label>
                                 <input
                                     type="text"
                                     value={formData.badge}
                                     onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
+                                    className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
                                     placeholder="New, Popular, etc."
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4 md:space-y-6">
                         <div>
-                            <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Product Image</label>
+                            <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Product Image</label>
                             <div
-                                className={`relative aspect-[3/4] rounded-3xl overflow-hidden border-2 border-dashed transition-all flex flex-col items-center justify-center p-4 bg-gray-50 ${imagePreview ? "border-transparent" : "border-gray-200 hover:border-brand-orange/40"}`}
+                                className={`relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden border-2 border-dashed transition-all flex flex-col items-center justify-center p-3 md:p-4 bg-gray-50 ${imagePreview ? "border-transparent" : "border-gray-200 hover:border-brand-orange/40"}`}
                             >
                                 {imagePreview ? (
                                     <>
@@ -282,18 +282,18 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                         <button
                                             type="button"
                                             onClick={() => { setImageFile(null); setImagePreview(""); setFormData({ ...formData, image: "" }) }}
-                                            className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-xl shadow-lg hover:bg-red-600 transition-colors"
+                                            className="absolute top-2 md:top-4 right-2 md:right-4 bg-red-500 text-white p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-lg hover:bg-red-600 transition-colors"
                                         >
-                                            <Trash2 size={20} />
+                                            <Trash2 size={16} md:size={20} />
                                         </button>
                                     </>
                                 ) : (
                                     <div className="text-center">
-                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white mb-4 shadow-sm text-gray-400">
-                                            <ImageIcon size={32} />
+                                        <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-white mb-3 md:mb-4 shadow-sm text-gray-400">
+                                            <ImageIcon size={24} md:size={32} />
                                         </div>
-                                        <p className="text-sm font-bold text-gray-500 mb-1">Click to upload image</p>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Recommended: 1200 x 1600px</p>
+                                        <p className="text-xs md:text-sm font-bold text-gray-500 mb-1">Click to upload image</p>
+                                        <p className="text-[8px] md:text-[10px] text-gray-400 font-bold uppercase tracking-widest">Recommended: 1200 x 1600px</p>
                                     </div>
                                 )}
                                 <input
@@ -307,27 +307,27 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                     </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-3xl p-8">
-                    <h3 className="font-black text-brand-navy mb-4">Colors</h3>
-                    <div className="flex flex-wrap gap-3 mb-4">
+                <div className="bg-gray-50 rounded-2xl md:rounded-3xl p-4 md:p-8">
+                    <h3 className="font-black text-brand-navy mb-3 md:mb-4 text-sm md:text-base">Colors</h3>
+                    <div className="flex flex-wrap gap-2 md:gap-3 mb-3 md:mb-4">
                         {formData.colors.map((color, index) => (
-                            <div key={index} className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm">
-                                <span className="w-5 h-5 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }} />
-                                <span className="text-sm font-bold text-brand-navy">{color.name}</span>
+                            <div key={index} className="flex items-center gap-2 bg-white px-2 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl shadow-sm">
+                                <span className="w-4 h-4 md:w-5 md:h-5 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }} />
+                                <span className="text-xs md:text-sm font-bold text-brand-navy">{color.name}</span>
                                 <button type="button" onClick={() => removeColor(index)} className="text-gray-400 hover:text-red-500">
-                                    <X size={14} />
+                                    <X size={12} md:size={14} />
                                 </button>
                             </div>
                         ))}
                     </div>
-                    <div className="flex gap-3 items-end">
+                    <div className="flex gap-2 md:gap-3 items-end">
                         <div className="flex-1">
                             <input
                                 type="text"
                                 value={newColorName}
                                 onChange={(e) => setNewColorName(e.target.value)}
                                 placeholder="Color name"
-                                className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold"
+                                className="w-full bg-white border-none rounded-xl px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-bold"
                             />
                         </div>
                         <div>
@@ -335,39 +335,39 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                 type="color"
                                 value={newColorHex}
                                 onChange={(e) => setNewColorHex(e.target.value)}
-                                className="w-12 h-12 rounded-xl cursor-pointer border-none"
+                                className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl cursor-pointer border-none"
                             />
                         </div>
                         <button
                             type="button"
                             onClick={addColor}
-                            className="bg-brand-navy text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-brand-navy/90"
+                            className="bg-brand-navy text-white px-3 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm hover:bg-brand-navy/90"
                         >
-                            <Plus size={20} />
+                            <Plus size={18} md:size={20} />
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-3xl p-8">
-                    <h3 className="font-black text-brand-navy mb-4">Logo Types</h3>
-                    <div className="flex flex-wrap gap-3 mb-4">
+                <div className="bg-gray-50 rounded-2xl md:rounded-3xl p-4 md:p-8">
+                    <h3 className="font-black text-brand-navy mb-3 md:mb-4 text-sm md:text-base">Logo Types</h3>
+                    <div className="flex flex-wrap gap-2 md:gap-3 mb-3 md:mb-4">
                         {formData.logos.map((logo, index) => (
-                            <div key={index} className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm">
-                                <span className="text-sm font-bold text-brand-navy">{logo.name}</span>
+                            <div key={index} className="flex items-center gap-2 bg-white px-2 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl shadow-sm">
+                                <span className="text-xs md:text-sm font-bold text-brand-navy">{logo.name}</span>
                                 <button type="button" onClick={() => removeLogo(index)} className="text-gray-400 hover:text-red-500">
-                                    <X size={14} />
+                                    <X size={12} md:size={14} />
                                 </button>
                             </div>
                         ))}
                     </div>
-                    <div className="flex gap-3 items-end">
+                    <div className="flex gap-2 md:gap-3 items-end">
                         <div className="flex-1">
                             <input
                                 type="text"
                                 value={newLogoId}
                                 onChange={(e) => setNewLogoId(e.target.value)}
                                 placeholder="Logo ID"
-                                className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold mb-2"
+                                className="w-full bg-white border-none rounded-xl px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-bold mb-1 md:mb-2"
                             />
                         </div>
                         <div className="flex-1">
@@ -376,27 +376,27 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                 value={newLogoName}
                                 onChange={(e) => setNewLogoName(e.target.value)}
                                 placeholder="Display name"
-                                className="w-full bg-white border-none rounded-xl px-4 py-3 text-sm font-bold"
+                                className="w-full bg-white border-none rounded-xl px-3 md:px-4 py-2.5 md:py-3 text-xs md:text-sm font-bold"
                             />
                         </div>
                         <button
                             type="button"
                             onClick={addLogo}
-                            className="bg-brand-navy text-white px-4 py-3 rounded-xl font-bold text-sm hover:bg-brand-navy/90"
+                            className="bg-brand-navy text-white px-3 md:px-4 py-2.5 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm hover:bg-brand-navy/90"
                         >
-                            <Plus size={20} />
+                            <Plus size={18} md:size={20} />
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-3xl p-8">
-                    <h3 className="font-black text-brand-navy mb-4">Sizes</h3>
-                    <div className="flex flex-wrap gap-3 mb-4">
+                <div className="bg-gray-50 rounded-2xl md:rounded-3xl p-4 md:p-8">
+                    <h3 className="font-black text-brand-navy mb-3 md:mb-4 text-sm md:text-base">Sizes</h3>
+                    <div className="flex flex-wrap gap-2 md:gap-3 mb-3 md:mb-4">
                         {formData.sizes.map((size, index) => (
-                            <div key={index} className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm">
-                                <span className="text-sm font-bold text-brand-navy">{size}</span>
+                            <div key={index} className="flex items-center gap-2 bg-white px-2 md:px-3 py-1.5 md:py-2 rounded-lg md:rounded-xl shadow-sm">
+                                <span className="text-xs md:text-sm font-bold text-brand-navy">{size}</span>
                                 <button type="button" onClick={() => removeSize(index)} className="text-gray-400 hover:text-red-500">
-                                    <X size={14} />
+                                    <X size={12} md:size={14} />
                                 </button>
                             </div>
                         ))}
@@ -408,7 +408,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                 type="button"
                                 onClick={() => addSize(size)}
                                 disabled={formData.sizes.includes(size)}
-                                className={`px-4 py-2 rounded-xl font-bold text-sm ${
+                                className={`px-3 md:px-4 py-2 md:py-2 rounded-lg md:rounded-xl font-bold text-xs md:text-sm ${
                                     formData.sizes.includes(size)
                                         ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                         : "bg-white text-brand-navy hover:bg-brand-navy hover:text-white"
@@ -420,49 +420,49 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div>
-                        <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Collection</label>
+                        <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Collection</label>
                         <select
                             value={formData.collection}
                             onChange={(e) => setFormData({ ...formData, collection: e.target.value })}
-                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all appearance-none"
+                            className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all appearance-none"
                         >
                             <option value="">None</option>
                             {collections?.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                         </select>
                     </div>
                     <div>
-                        <label className="block text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Stock Quantity</label>
+                        <label className="block text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 mb-2 ml-1">Stock Quantity</label>
                         <input
                             type="number"
                             min="0"
                             value={formData.stock}
                             onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                            className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
+                            className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
                             placeholder="0"
                         />
                     </div>
                 </div>
 
                 {error && (
-                    <div className="p-4 bg-red-50 rounded-2xl flex items-center gap-3 text-red-600 font-bold text-sm">
-                        <AlertCircle size={20} />
+                    <div className="p-3 md:p-4 bg-red-50 rounded-xl md:rounded-2xl flex items-center gap-2 md:gap-3 text-red-600 font-bold text-xs md:text-sm">
+                        <AlertCircle size={18} md:size={20} />
                         {error}
                     </div>
                 )}
 
-                <div className="flex justify-end gap-4 pt-4 border-t border-gray-50">
-                    <Button variant="secondary" type="button" onClick={onCancel}>
+                <div className="flex flex-col sm:flex-row justify-end gap-3 md:gap-4 pt-3 md:pt-4 border-t border-gray-50">
+                    <Button variant="secondary" type="button" onClick={onCancel} className="w-full sm:w-auto h-12 md:h-14">
                         Cancel
                     </Button>
                     <Button
                         variant="primary"
                         type="submit"
                         loading={loading}
-                        className="px-10 rounded-2xl h-14"
+                        className="w-full sm:w-auto px-6 md:px-10 rounded-xl md:rounded-2xl h-12 md:h-14 text-sm md:text-base"
                     >
-                        <Save size={20} className="mr-2" />
+                        <Save size={18} md:size={20} className="mr-2" />
                         {product ? "Update Product" : "Save Product"}
                     </Button>
                 </div>
