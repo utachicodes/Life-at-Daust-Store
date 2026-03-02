@@ -24,7 +24,8 @@ describe('Home Page', () => {
         // Since useQuery returns empty array, featuredProduct will be undefined
         renderWithProviders(<Home />);
 
-        // "Featured Product" badge should NOT be in document
-        expect(screen.queryByText(/Featured Product/i)).not.toBeInTheDocument();
+        // Even if Convex is empty, the static fallback featured product should be shown
+        // so the "Featured Product" badge should remain.
+        expect(screen.getByText(/Featured Product/i)).toBeInTheDocument();
     });
 });

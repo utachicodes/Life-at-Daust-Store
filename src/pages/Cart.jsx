@@ -152,12 +152,6 @@ export default function Cart() {
               </Link>
             </div>
 
-            {/* Trusted indicators */}
-            <div className="mt-10 pt-8 border-t border-white/10 flex justify-center gap-6 opacity-40 grayscale">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="Paypal" className="h-4" />
-            </div>
           </div>
         </div>
       </div>

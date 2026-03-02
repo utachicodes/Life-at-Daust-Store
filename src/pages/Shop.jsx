@@ -12,7 +12,6 @@ import shopHero from "../assets/shop-hero.jpg";
 
 export default function Shop() {
   const location = useLocation();
-  const convexProducts = useQuery(api.products.list);
   const collections = useQuery(api.collections.list);
   const [category, setCategory] = useState("All Categories");
   const [sort, setSort] = useState("Featured");
@@ -96,7 +95,7 @@ export default function Shop() {
 
   return (
     <main className="min-h-screen bg-gray-50/50">
-      <Hero 
+      <Hero
         title="University Merch"
         subtitle="Rep DAUST with Pride"
         image={shopHero}
@@ -118,18 +117,17 @@ export default function Shop() {
                 <span className="sm:hidden">Category</span>
                 <ChevronDown size={14} className="text-gray-400 group-hover:text-brand-orange transition-colors" />
               </button>
-              
+
               <div className="absolute top-full left-0 mt-2 w-48 sm:w-56 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                 <div className="p-2">
                   {CATEGORIES.map(cat => (
                     <button
                       key={cat}
                       onClick={() => setCategory(cat)}
-                      className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                        category === cat 
-                          ? "bg-brand-navy text-white" 
+                      className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${category === cat
+                          ? "bg-brand-navy text-white"
                           : "text-gray-600 hover:bg-gray-50 hover:text-brand-orange"
-                      }`}
+                        }`}
                     >
                       {cat}
                     </button>
@@ -145,18 +143,17 @@ export default function Shop() {
                 <span className="sm:hidden">Sort</span>
                 <ChevronDown size={14} className="text-gray-400 group-hover:text-brand-orange transition-colors" />
               </button>
-              
+
               <div className="absolute top-full right-0 mt-2 w-48 sm:w-56 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                 <div className="p-2">
                   {["Featured", "Price: Low to High", "Price: High to Low", "Newest Arrivals"].map(s => (
                     <button
                       key={s}
                       onClick={() => setSort(s)}
-                      className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                        sort === s 
-                          ? "bg-brand-navy text-white" 
+                      className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all ${sort === s
+                          ? "bg-brand-navy text-white"
                           : "text-gray-600 hover:bg-gray-50 hover:text-brand-orange"
-                      }`}
+                        }`}
                     >
                       {s}
                     </button>
@@ -176,7 +173,7 @@ export default function Shop() {
                 className="pl-9 sm:pl-11 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-full shadow-sm border border-gray-100 focus:border-brand-orange focus:ring-4 focus:ring-brand-orange/5 outline-none transition-all w-full font-bold text-xs sm:text-sm"
               />
               {searchQuery && (
-                <button 
+                <button
                   onClick={() => setSearchQuery("")}
                   className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange"
                 >

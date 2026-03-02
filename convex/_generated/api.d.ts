@@ -12,6 +12,7 @@ import type * as actions from "../actions.js";
 import type * as clearProducts from "../clearProducts.js";
 import type * as collections from "../collections.js";
 import type * as data from "../data.js";
+import type * as files from "../files.js";
 import type * as orders from "../orders.js";
 import type * as products from "../products.js";
 import type * as seed from "../seed.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   clearProducts: typeof clearProducts;
   collections: typeof collections;
   data: typeof data;
+  files: typeof files;
   orders: typeof orders;
   products: typeof products;
   seed: typeof seed;

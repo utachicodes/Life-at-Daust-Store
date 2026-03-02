@@ -3,15 +3,21 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminToken: v.string() },
+  handler: async (ctx, args) => {
+    if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+      throw new Error("Unauthorized");
+    }
     return await ctx.db.query("orders").order("desc").collect();
   },
 });
 
 export const getById = query({
-  args: { id: v.id("orders") },
+  args: { id: v.id("orders"), adminToken: v.string() },
   handler: async (ctx, args) => {
+    if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+      throw new Error("Unauthorized");
+    }
     return await ctx.db.get(args.id);
   },
 });
@@ -34,12 +40,15 @@ export const addOrder = mutation({
     subtotal: v.number(),
     deliveryFee: v.number(),
     total: v.number(),
+    paymentStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     // Save to Convex database
+    const proofOfPaymentUrl = args.paymentStorageId ? (await ctx.storage.getUrl(args.paymentStorageId)) ?? undefined : undefined;
     const orderId = await ctx.db.insert("orders", {
       ...args,
-      status: "Processing",
+      status: "Pending Verification",
+      proofOfPaymentUrl,
       createdAt: Date.now(),
     });
 
@@ -63,8 +72,12 @@ export const updateStatus = mutation({
   args: {
     id: v.id("orders"),
     status: v.string(),
+    adminToken: v.string(),
   },
   handler: async (ctx, args) => {
+    if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+      throw new Error("Unauthorized");
+    }
     await ctx.db.patch(args.id, { status: args.status });
   },
 });

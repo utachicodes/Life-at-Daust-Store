@@ -67,9 +67,14 @@ export const addProduct = mutation({
         description: v.optional(v.string()),
         collection: v.optional(v.string()),
         stock: v.optional(v.number()),
+        adminToken: v.string(),
     },
     handler: async (ctx, args) => {
-        const productId = await ctx.db.insert("products", args);
+        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+            throw new Error("Unauthorized");
+        }
+        const { adminToken, ...productArgs } = args;
+        const productId = await ctx.db.insert("products", productArgs);
         return productId;
     },
 });
@@ -98,16 +103,23 @@ export const updateProduct = mutation({
         description: v.optional(v.string()),
         collection: v.optional(v.string()),
         stock: v.optional(v.number()),
+        adminToken: v.string(),
     },
     handler: async (ctx, args) => {
-        const { id, ...fields } = args;
+        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+            throw new Error("Unauthorized");
+        }
+        const { id, adminToken, ...fields } = args;
         await ctx.db.patch(id, fields);
     },
 });
 
 export const removeProduct = mutation({
-    args: { id: v.id("products") },
+    args: { id: v.id("products"), adminToken: v.string() },
     handler: async (ctx, args) => {
+        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+            throw new Error("Unauthorized");
+        }
         await ctx.db.delete(args.id);
     },
 });

@@ -8,12 +8,18 @@ export function AdminProvider({ children }) {
         return sessionStorage.getItem("is_admin") === "true";
     });
 
+    const [adminToken, setAdminToken] = useState(() => {
+        return sessionStorage.getItem("admin_token");
+    });
+
     const login = (password) => {
         // Basic password check - User can change this later
         // Defaulting to "daust_admin_2024" for now
         if (password === "daust") {
             setIsAdmin(true);
+            setAdminToken(password);
             sessionStorage.setItem("is_admin", "true");
+            sessionStorage.setItem("admin_token", password);
             return true;
         }
         return false;
@@ -21,11 +27,13 @@ export function AdminProvider({ children }) {
 
     const logout = () => {
         setIsAdmin(false);
+        setAdminToken(null);
         sessionStorage.removeItem("is_admin");
+        sessionStorage.removeItem("admin_token");
     };
 
     return (
-        <AdminContext.Provider value={{ isAdmin, login, logout }}>
+        <AdminContext.Provider value={{ isAdmin, adminToken, login, logout }}>
             {children}
         </AdminContext.Provider>
     );

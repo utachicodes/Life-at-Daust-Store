@@ -11,8 +11,10 @@ import {
 import Button from "../../components/ui/Button";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import CollectionForm from "./CollectionForm";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function AdminCollections() {
+    const { adminToken } = useAdmin();
     const [searchQuery, setSearchQuery] = useState("");
     const [showForm, setShowForm] = useState(false);
     const [editingCollection, setEditingCollection] = useState(null);
@@ -28,7 +30,7 @@ export default function AdminCollections() {
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this collection? Products will be unassigned from this collection.")) {
             try {
-                await removeCollection({ id });
+                await removeCollection({ id, adminToken });
             } catch (error) {
                 console.error("Failed to delete collection:", error);
                 alert("Failed to delete collection. Please try again.");

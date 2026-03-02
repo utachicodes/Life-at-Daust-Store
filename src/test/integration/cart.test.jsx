@@ -32,7 +32,7 @@ describe('Cart & Checkout Integration', () => {
         await user.click(shopLinks[0]);
 
         // Verify we are on the Shop page
-        expect(screen.getByText(/store catalog/i)).toBeInTheDocument();
+        expect(screen.getByText(/university merch/i)).toBeInTheDocument();
 
         // Find a product and click Quick Add
         const quickAddButtons = screen.getAllByText(/quick add/i);
@@ -88,6 +88,6 @@ describe('Cart & Checkout Integration', () => {
         await user.click(checkoutButton);
 
         // Verify we are on the Checkout page
-        expect(screen.getByText(/complete your order/i)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /complete your order/i })).toBeInTheDocument();
     });
 });
