@@ -13,20 +13,20 @@ describe('Shop Page', () => {
     it('renders shop catalog title', () => {
         renderWithProviders(<Shop />);
 
-        // "Store Catalog" heading is shown when category is "All Categories"
-        expect(screen.getByText(/Store Catalog/i)).toBeInTheDocument();
+        // "University Merch" heading is shown when category is "All Categories"
+        expect(screen.getByText(/University Merch/i)).toBeInTheDocument();
     });
 
     it('displays sort options', () => {
         renderWithProviders(<Shop />);
         // Sort select options are always rendered
-        expect(screen.getByText(/Featured/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/Featured/i)[0]).toBeInTheDocument();
     });
 
     it('displays empty state when no products match', () => {
         renderWithProviders(<Shop />);
         // When collections is [] and STATIC_PRODUCTS exist but collections grouping yields empty,
         // products are shown from static data. Just verify the main section renders.
-        expect(screen.getByText(/Store Catalog/i)).toBeInTheDocument();
+        expect(screen.getByText(/University Merch/i)).toBeInTheDocument();
     });
 });

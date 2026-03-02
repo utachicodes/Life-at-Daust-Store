@@ -14,10 +14,12 @@ import {
 } from "lucide-react";
 import { formatPrice } from "../../utils/format.js";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function AdminDashboard() {
+    const { adminToken } = useAdmin();
     const products = useQuery(api.products.list);
-    const orders = useQuery(api.orders.list);
+    const orders = useQuery(api.orders.list, { adminToken });
 
     const isLoading = products === undefined || orders === undefined;
 

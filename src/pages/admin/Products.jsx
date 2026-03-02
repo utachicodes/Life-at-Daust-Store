@@ -16,10 +16,12 @@ import {
 import Button from "../../components/ui/Button";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { formatPrice } from "../../utils/format.js";
+import { useAdmin } from "../../context/AdminContext";
 
 import AdminProductForm from "./ProductForm";
 
 export default function AdminProducts() {
+    const { adminToken } = useAdmin();
     const products = useQuery(api.products.list);
     const removeProduct = useMutation(api.products.removeProduct);
     const [searchTerm, setSearchTerm] = useState("");
@@ -40,7 +42,7 @@ export default function AdminProducts() {
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
             try {
-                await removeProduct({ id });
+                await removeProduct({ id, adminToken });
             } catch (err) {
                 console.error("Failed to delete product", err);
                 alert("Failed to delete product. Please try again.");

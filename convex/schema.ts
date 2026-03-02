@@ -53,6 +53,8 @@ export default defineSchema({
         deliveryFee: v.number(),
         total: v.number(),
         status: v.string(),
+        paymentStorageId: v.optional(v.id("_storage")),
+        proofOfPaymentUrl: v.optional(v.string()),
         createdAt: v.number(),
     }),
 });

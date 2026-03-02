@@ -14,9 +14,11 @@ import {
     AlertCircle
 } from "lucide-react";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function AdminOrders() {
-    const orders = useQuery(api.orders.list);
+    const { adminToken } = useAdmin();
+    const orders = useQuery(api.orders.list, { adminToken });
     const updateStatus = useMutation(api.orders.updateStatus);
     const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -24,6 +26,7 @@ export default function AdminOrders() {
 
     const getStatusColor = (status) => {
         switch (status) {
+            case "Pending Verification": return "bg-purple-50 text-purple-600";
             case "Processing": return "bg-brand-orange/10 text-brand-orange";
             case "Shipped": return "bg-blue-50 text-blue-600";
             case "Delivered": return "bg-green-50 text-green-600";
@@ -34,7 +37,7 @@ export default function AdminOrders() {
 
     const handleStatusUpdate = async (id, newStatus) => {
         try {
-            await updateStatus({ id, status: newStatus });
+            await updateStatus({ id, status: newStatus, adminToken });
             if (selectedOrder && selectedOrder._id === id) {
                 setSelectedOrder({ ...selectedOrder, status: newStatus });
             }
@@ -147,7 +150,33 @@ export default function AdminOrders() {
                                 >
                                     <CheckCircle2 size={16} /> Delivered
                                 </button>
+                                <button
+                                    onClick={() => handleStatusUpdate(selectedOrder._id, "Cancelled")}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedOrder.status === "Cancelled" ? "bg-red-600 text-white shadow-lg shadow-red-600/20" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        }`}
+                                >
+                                    <AlertCircle size={16} /> Cancelled
+                                </button>
+                                <button
+                                    onClick={() => handleStatusUpdate(selectedOrder._id, "Pending Verification")}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${selectedOrder.status === "Pending Verification" ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                        }`}
+                                >
+                                    <AlertCircle size={16} /> Pending Verification
+                                </button>
                             </div>
+
+                            {selectedOrder.proofOfPaymentUrl && (
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Proof of Payment</h3>
+                                    <div className="w-full max-w-sm rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gray-50">
+                                        <a href={selectedOrder.proofOfPaymentUrl} target="_blank" rel="noreferrer">
+                                            <img src={selectedOrder.proofOfPaymentUrl} alt="Proof of payment" className="w-full object-cover hover:opacity-90 transition-opacity" />
+                                        </a>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 italic font-bold">Click image to view in full size</p>
+                                </div>
+                            )}
 
                             <div className="grid md:grid-cols-2 gap-10">
                                 {/* Customer Info */}

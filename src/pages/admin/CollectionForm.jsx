@@ -4,8 +4,10 @@ import { api } from "../../../convex/_generated/api";
 import { X, Upload, Image as ImageIcon } from "lucide-react";
 import Button from "../../components/ui/Button";
 import { optimizeImage, createPreviewUrl, revokePreviewUrl } from "../../utils/imageOptimizer";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function CollectionForm({ collection, onClose, onSave }) {
+    const { adminToken } = useAdmin();
     const [formData, setFormData] = useState({
         name: "",
         slug: "",
@@ -109,9 +111,10 @@ export default function CollectionForm({ collection, onClose, onSave }) {
                 await updateCollection({
                     id: collection._id,
                     ...payload,
+                    adminToken,
                 });
             } else {
-                await addCollection(payload);
+                await addCollection({ ...payload, adminToken });
             }
 
             onSave();

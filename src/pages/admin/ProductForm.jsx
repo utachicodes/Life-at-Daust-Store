@@ -4,8 +4,10 @@ import { api } from "../../../convex/_generated/api";
 import { X, Save, Trash2, Image as ImageIcon, AlertCircle, Plus } from "lucide-react";
 import Button from "../../components/ui/Button";
 import { optimizeImage, createPreviewUrl, revokePreviewUrl } from "../../utils/imageOptimizer";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function AdminProductForm({ product, onSave, onCancel }) {
+    const { adminToken } = useAdmin();
     const [formData, setFormData] = useState({
         name: "",
         category: "Accessories",
@@ -167,9 +169,9 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
             };
 
             if (product) {
-                await updateProduct({ id: product._id, ...payload });
+                await updateProduct({ id: product._id, ...payload, adminToken });
             } else {
-                await addProduct(payload);
+                await addProduct({ ...payload, adminToken });
             }
 
             onSave();
@@ -408,11 +410,10 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                 type="button"
                                 onClick={() => addSize(size)}
                                 disabled={formData.sizes.includes(size)}
-                                className={`px-3 md:px-4 py-2 md:py-2 rounded-lg md:rounded-xl font-bold text-xs md:text-sm ${
-                                    formData.sizes.includes(size)
+                                className={`px-3 md:px-4 py-2 md:py-2 rounded-lg md:rounded-xl font-bold text-xs md:text-sm ${formData.sizes.includes(size)
                                         ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                         : "bg-white text-brand-navy hover:bg-brand-navy hover:text-white"
-                                }`}
+                                    }`}
                             >
                                 + {size}
                             </button>

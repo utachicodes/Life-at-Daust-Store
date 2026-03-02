@@ -21,12 +21,7 @@ function makeOrderId() {
 // Delivery Locations in Senegal
 const locations = [
   { name: "DAUST Campus", fee: 0 },
-  { name: "Somone", fee: 1000 },
-  { name: "Saly", fee: 2000 },
-  { name: "Mbour", fee: 2500 },
-  { name: "Thies", fee: 3500 },
-  { name: "Dakar", fee: 5000 },
-  { name: "Other (Calculate on delivery)", fee: 0 },
+  { name: "Other Location (Calculated on arrival)", fee: 0 },
 ];
 
 export default function Checkout() {
@@ -34,10 +29,12 @@ export default function Checkout() {
   const [orderId] = useState(makeOrderId());
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", location: "" });
+  const [paymentFile, setPaymentFile] = useState(null);
   const [error, setError] = useState("");
   const nav = useNavigate();
 
   const addOrder = useMutation(api.orders.addOrder);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const deliveryFee = useMemo(() => {
     const loc = locations.find(l => l.name === form.location);
@@ -84,8 +81,22 @@ export default function Checkout() {
       return;
     }
 
+    if (!paymentFile) {
+      setError("Please upload your proof of payment screenshot to confirm the order.");
+      return;
+    }
+
     setLoading(true);
     try {
+      // Post file to Convex storage
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": paymentFile.type },
+        body: paymentFile,
+      });
+      const { storageId } = await result.json();
+
       // Save order to Convex (includes automatic Google Sheets backup)
       await addOrder({
         orderId,
@@ -98,6 +109,7 @@ export default function Checkout() {
         subtotal,
         deliveryFee,
         total,
+        paymentStorageId: storageId,
       });
 
       clear();
@@ -187,12 +199,46 @@ export default function Checkout() {
                   <ChevronLeft className="rotate-[-90deg]" size={18} />
                 </div>
               </div>
-              {form.location && form.location !== "DAUST Campus" && form.location !== "Other (Calculate on delivery)" && (
+              {form.location && form.location !== "DAUST Campus" && form.location !== "Other Location (Calculated on arrival)" && (
                 <p className="text-[10px] text-gray-500 ml-1 italic font-medium">Delivery fee to {form.location}: {fmt(deliveryFee)}</p>
               )}
-              {form.location === "Other (Calculate on delivery)" && (
-                <p className="text-[10px] text-brand-orange ml-1 italic font-bold">A staff member will contact you to confirm the delivery fee for your specific location.</p>
+              {form.location === "Other Location (Calculated on arrival)" && (
+                <p className="text-[10px] text-brand-orange ml-1 italic font-bold">A staff member will contact you to confirm the delivery fee for your specific location prior to dispatch.</p>
               )}
+            </div>
+
+            <div className="border border-gray-200 rounded-2xl p-6 space-y-6">
+              <h3 className="text-lg font-black text-brand-navy tracking-tight">Payment Details</h3>
+              <p className="text-sm text-gray-500 font-medium">To complete your order, please send the total amount (<span className="text-brand-orange font-bold font-black">{fmt(total)}</span>) via Wave or Orange Money, then upload a screenshot of your transaction below.</p>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-blue-500/20 bg-blue-50/50">
+                  <span className="font-bold text-blue-700 mb-2">Wave Payment</span>
+                  <img src="/wave.png" alt="Wave QR Code" className="w-[200px] h-[200px] object-contain rounded-lg shadow-sm bg-white p-2" />
+                </div>
+
+                <div className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-orange-500/20 bg-orange-50/50">
+                  <span className="font-bold text-orange-600 mb-2">Orange Money</span>
+                  <img src="/orangemoney.png" alt="Orange Money QR Code" className="w-[200px] h-[200px] object-contain rounded-lg shadow-sm bg-white p-2" />
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-gray-100">
+                <label htmlFor="proof" className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+                  <span className="text-red-500">*</span> Proof of Payment
+                </label>
+                <div className="relative">
+                  <input
+                    id="proof"
+                    type="file"
+                    accept="image/*"
+                    required
+                    onChange={(e) => setPaymentFile(e.target.files[0])}
+                    className="w-full h-16 bg-white border border-gray-100 rounded-2xl px-6 text-brand-navy font-bold focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none transition-all shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-brand-orange/10 file:text-brand-orange hover:file:bg-brand-orange/20 file:transition-colors pt-[18px]"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 ml-1 italic font-medium">Please upload a clear screenshot showing the successful transaction.</p>
+              </div>
             </div>
 
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm mt-12 space-y-6">

@@ -67,7 +67,7 @@ describe('CartContext', () => {
 
         act(() => {
             const item = result.current.items[0];
-            result.current.removeItem(item.id, item.selectedColor, item.selectedSize);
+            result.current.removeItem(item.id, item.selectedColor, item.selectedSize, item.selectedLogo);
         });
 
         expect(result.current.items).toHaveLength(0);
@@ -83,7 +83,7 @@ describe('CartContext', () => {
 
         act(() => {
             const item = result.current.items[0];
-            result.current.setQty(item.id, item.selectedColor, item.selectedSize, 5);
+            result.current.setQty(item.id, item.selectedColor, item.selectedSize, item.selectedLogo, 5);
         });
 
         expect(result.current.items[0].qty).toBe(5);

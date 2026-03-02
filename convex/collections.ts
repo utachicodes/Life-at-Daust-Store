@@ -53,9 +53,14 @@ export const addCollection = mutation({
         slug: v.string(),
         description: v.optional(v.string()),
         image: v.optional(v.string()),
+        adminToken: v.string(),
     },
     handler: async (ctx, args) => {
-        const collectionId = await ctx.db.insert("collections", args);
+        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+            throw new Error("Unauthorized");
+        }
+        const { adminToken, ...collectionArgs } = args;
+        const collectionId = await ctx.db.insert("collections", collectionArgs);
         return collectionId;
     },
 });
@@ -71,16 +76,23 @@ export const updateCollection = mutation({
         slug: v.optional(v.string()),
         description: v.optional(v.string()),
         image: v.optional(v.string()),
+        adminToken: v.string(),
     },
     handler: async (ctx, args) => {
-        const { id, ...fields } = args;
+        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+            throw new Error("Unauthorized");
+        }
+        const { id, adminToken, ...fields } = args;
         await ctx.db.patch(id, fields);
     },
 });
 
 export const removeCollection = mutation({
-    args: { id: v.id("collections") },
+    args: { id: v.id("collections"), adminToken: v.string() },
     handler: async (ctx, args) => {
+        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust_admin_2024")) {
+            throw new Error("Unauthorized");
+        }
         // Remove collection from all products first
         const products = await ctx.db.query("products").collect();
         const collection = await ctx.db.get(args.id);
