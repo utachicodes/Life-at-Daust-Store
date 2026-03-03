@@ -250,69 +250,19 @@ export default function Checkout() {
 
             <div className="border border-gray-200 rounded-2xl p-6 space-y-6">
               <h3 className="text-lg font-black text-brand-navy tracking-tight">Payment Method</h3>
-              
-              <div className="grid gap-4 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("naboopay")}
-                  className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all ${paymentMethod === "naboopay" ? "border-brand-orange bg-brand-orange/5" : "border-gray-100 bg-white"}`}
-                >
-                  <Shield size={24} className={paymentMethod === "naboopay" ? "text-brand-orange" : "text-gray-400"} />
-                  <span className={`font-bold mt-2 ${paymentMethod === "naboopay" ? "text-brand-navy" : "text-gray-500"}`}>Online Payment</span>
-                  <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Wave, Orange Money</p>
-                </button>
 
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("manual")}
-                  className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all ${paymentMethod === "manual" ? "border-brand-orange bg-brand-orange/5" : "border-gray-100 bg-white"}`}
-                >
-                  <AlertCircle size={24} className={paymentMethod === "manual" ? "text-brand-orange" : "text-gray-400"} />
-                  <span className={`font-bold mt-2 ${paymentMethod === "manual" ? "text-brand-navy" : "text-gray-500"}`}>Manual Proof</span>
-                  <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Upload Screenshot</p>
-                </button>
+              <div className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-brand-orange bg-brand-orange/5">
+                <Shield size={24} className="text-brand-orange" />
+                <span className="font-bold mt-2 text-brand-navy">Online Payment</span>
+                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Wave, Orange Money</p>
               </div>
 
-              {paymentMethod === "naboopay" && (
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
-                  <Info size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-700 leading-relaxed font-medium">
-                    You will be redirected to NabooPay's secure portal to complete your payment using Wave or Orange Money.
-                  </p>
-                </div>
-              )}
-
-              {paymentMethod === "manual" && (
-                <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
-                  <p className="text-sm text-gray-500 font-medium">Please send the total amount (<span className="text-brand-orange font-bold font-black">{fmt(total)}</span>) via Wave or Orange Money, then upload a screenshot.</p>
-                  
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-blue-500/20 bg-blue-50/50">
-                      <span className="font-bold text-blue-700 mb-2">Wave Payment</span>
-                      <img src="/wave.png" alt="Wave QR Code" className="w-[120px] h-[120px] object-contain rounded-lg shadow-sm bg-white p-2" />
-                    </div>
-
-                    <div className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-orange-500/20 bg-orange-50/50">
-                      <span className="font-bold text-orange-600 mb-2">Orange Money</span>
-                      <img src="/orangemoney.png" alt="Orange Money QR Code" className="w-[120px] h-[120px] object-contain rounded-lg shadow-sm bg-white p-2" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 pt-4 border-t border-gray-100">
-                    <label htmlFor="proof" className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
-                      <span className="text-red-500">*</span> Proof of Payment
-                    </label>
-                    <input
-                      id="proof"
-                      type="file"
-                      accept="image/*"
-                      required={paymentMethod === "manual"}
-                      onChange={(e) => setPaymentFile(e.target.files[0])}
-                      className="w-full h-16 bg-white border border-gray-100 rounded-2xl px-6 text-brand-navy font-bold focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none transition-all shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-brand-orange/10 file:text-brand-orange hover:file:bg-brand-orange/20 file:transition-colors pt-[18px]"
-                    />
-                  </div>
-                </div>
-              )}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
+                <Info size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700 leading-relaxed font-medium">
+                  You will be redirected to NabooPay's secure portal to complete your payment using Wave or Orange Money.
+                </p>
+              </div>
             </div>
 
             <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm mt-12 space-y-6">
