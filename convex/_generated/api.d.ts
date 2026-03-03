@@ -9,15 +9,14 @@
  */
 
 import type * as actions from "../actions.js";
+import type * as clearAllData from "../clearAllData.js";
 import type * as clearProducts from "../clearProducts.js";
 import type * as collections from "../collections.js";
-import type * as data from "../data.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as naboopay from "../naboopay.js";
 import type * as orders from "../orders.js";
 import type * as products from "../products.js";
-import type * as seed from "../seed.js";
 import type * as seedCollections from "../seedCollections.js";
 
 import type {
@@ -28,15 +27,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   actions: typeof actions;
+  clearAllData: typeof clearAllData;
   clearProducts: typeof clearProducts;
   collections: typeof collections;
-  data: typeof data;
   files: typeof files;
   http: typeof http;
   naboopay: typeof naboopay;
   orders: typeof orders;
   products: typeof products;
-  seed: typeof seed;
   seedCollections: typeof seedCollections;
 }>;
 
