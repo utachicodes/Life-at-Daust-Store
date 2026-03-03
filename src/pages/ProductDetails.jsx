@@ -19,6 +19,7 @@ export default function ProductDetails() {
     const [selectedSize, setSelectedSize] = useState(null);
     const [selectedLogo, setSelectedLogo] = useState(null);
     const [quantity, setQuantity] = useState(1);
+    const [logoPreview, setLogoPreview] = useState(null);
 
     // Scroll to top when navigating to product details
     useEffect(() => {
@@ -35,32 +36,34 @@ export default function ProductDetails() {
         }
     }, [product]);
 
-    // Update main image when logo or color selection changes
+    // Update main image when color selection changes (color-only variant images)
     useEffect(() => {
         if (product?.logoImages && selectedColor?.name) {
-            const logoKey = selectedLogo?.id || "_default";
-            const variantImages = product.logoImages[logoKey]?.[selectedColor.name];
-            if (variantImages && variantImages.length > 0) {
-                setMainImage(variantImages[0]);
+            // Look under _default key first, then fall back to any key that has this color
+            const colorImages = product.logoImages["_default"]?.[selectedColor.name]
+                || Object.values(product.logoImages).find(
+                    colorMap => colorMap?.[selectedColor.name]?.length > 0
+                )?.[selectedColor.name];
+            if (colorImages && colorImages.length > 0) {
+                setMainImage(colorImages[0]);
                 return;
             }
         }
-        if (selectedLogo?.image) {
-            setMainImage(selectedLogo.image);
+        if (product) {
+            setMainImage(product.image);
         }
-    }, [selectedLogo, selectedColor, product]);
+    }, [selectedColor, product]);
 
-    // Get variant-specific images based on selected logo + color
+    // Get variant-specific images based on selected color only
     const getVariantImages = () => {
         if (product?.logoImages && selectedColor?.name) {
-            const logoKey = selectedLogo?.id || "_default";
-            const variantImages = product.logoImages[logoKey]?.[selectedColor.name];
-            if (variantImages && variantImages.length > 0) {
-                return variantImages;
+            const colorImages = product.logoImages["_default"]?.[selectedColor.name]
+                || Object.values(product.logoImages).find(
+                    colorMap => colorMap?.[selectedColor.name]?.length > 0
+                )?.[selectedColor.name];
+            if (colorImages && colorImages.length > 0) {
+                return colorImages;
             }
-        }
-        if (product.logos && product.logos.length > 0 && selectedLogo?.image) {
-            return [selectedLogo.image, ...(product.images || [])];
         }
         return product.images || [product.image];
     };
@@ -108,12 +111,24 @@ export default function ProductDetails() {
             <main className="max-w-7xl mx-auto px-4 py-12 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
             {/* Left: Image Gallery (Span 7) */}
                 <div className="lg:col-span-5 space-y-4 sm:space-y-6">
-                    <div className="aspect-[3/4] sm:aspect-[4/5] rounded-2xl sm:rounded-[2rem] overflow-hidden bg-gray-50/50 premium-shadow border border-gray-100 animate-in fade-in zoom-in-95 duration-700">
+                    <div className="relative aspect-[3/4] sm:aspect-[4/5] rounded-2xl sm:rounded-[2rem] overflow-hidden bg-gray-50/50 premium-shadow border border-gray-100 animate-in fade-in zoom-in-95 duration-700">
                         <img
                             src={mainImage || product.image}
                             alt={product.name}
                             className="w-full h-full object-cover transition-all duration-700 ease-in-out hover:scale-110"
                         />
+                        {/* Temporary logo preview overlay */}
+                        {logoPreview && (
+                            <div
+                                className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10 animate-in fade-in duration-300 cursor-pointer"
+                                onClick={() => setLogoPreview(null)}
+                            >
+                                <div className="bg-white rounded-2xl p-4 shadow-2xl animate-in zoom-in-95 duration-300 max-w-[70%]">
+                                    <img src={logoPreview} alt="Logo preview" className="w-full object-contain rounded-xl" />
+                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center mt-3">Logo Preview</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-2 sm:gap-4 overflow-x-auto py-2 sm:py-4 scrollbar-hide px-1 sm:px-2">
                         {gallery.map((img, idx) => (
@@ -161,7 +176,7 @@ export default function ProductDetails() {
 
                     {/* Variants Section */}
                     <div className="space-y-10 mb-12 animate-in slide-in-from-right-10 duration-700 delay-200">
-                        {/* Logo Variants */}
+                        {/* Logo Variants - click to preview */}
                         {product.logos && product.logos.length > 0 && (
                             <div>
                                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
@@ -171,7 +186,13 @@ export default function ProductDetails() {
                                     {product.logos.map((logo) => (
                                         <button
                                             key={logo.id || logo.name}
-                                            onClick={() => setSelectedLogo(logo)}
+                                            onClick={() => {
+                                                setSelectedLogo(logo);
+                                                if (logo.image) {
+                                                    setLogoPreview(logo.image);
+                                                    setTimeout(() => setLogoPreview(null), 2500);
+                                                }
+                                            }}
                                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${
                                                 selectedLogo?.id === logo.id || selectedLogo?.name === logo.name
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"

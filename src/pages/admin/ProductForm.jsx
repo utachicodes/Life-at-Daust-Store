@@ -458,80 +458,71 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                     </div>
                 </div>
 
-                {/* Variant Images Section */}
+                {/* Variant Images Section - per color only */}
                 {formData.colors.length > 0 && (
                     <div className="bg-gray-50 rounded-2xl md:rounded-3xl p-4 md:p-8">
-                        <h3 className="font-black text-brand-navy mb-1 text-sm md:text-base">Variant Images</h3>
-                        <p className="text-[10px] text-gray-400 font-bold mb-4">Upload images for each color{formData.logos.length > 0 ? " and logo combination" : ""}. These show when a customer selects that variant.</p>
-                        <div className="space-y-4">
-                            {(formData.logos.length > 0 ? formData.logos : [{ id: "_default", name: null }]).map((logo) => (
-                                <div key={logo.id}>
-                                    {logo.name && (
-                                        <p className="text-xs font-black text-brand-navy mb-2 uppercase tracking-widest">{logo.name}</p>
-                                    )}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {formData.colors.map((color) => {
-                                            const images = formData.logoImages?.[logo.id]?.[color.name] || [];
-                                            return (
-                                                <div key={`${logo.id}-${color.name}`} className="bg-white rounded-xl p-3 border border-gray-100">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }} />
-                                                        <span className="text-xs font-bold text-brand-navy">{color.name}</span>
-                                                        <span className="text-[10px] text-gray-400 ml-auto">{images.length} image{images.length !== 1 ? "s" : ""}</span>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-1.5 mb-2">
-                                                        {images.map((img, idx) => (
-                                                            <div key={idx} className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 group">
-                                                                <img src={typeof img === "string" && !img.startsWith("kg") ? img : ""} alt="" className="w-full h-full object-cover" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const updated = { ...formData.logoImages };
-                                                                        updated[logo.id][color.name] = updated[logo.id][color.name].filter((_, i) => i !== idx);
-                                                                        setFormData({ ...formData, logoImages: updated });
-                                                                    }}
-                                                                    className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                                                                >
-                                                                    <X size={14} className="text-white" />
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                        <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-brand-orange/40 transition-colors bg-gray-50">
-                                                            <Plus size={16} className="text-gray-400" />
-                                                            <input
-                                                                type="file"
-                                                                accept="image/*"
-                                                                multiple
-                                                                className="hidden"
-                                                                onChange={async (e) => {
-                                                                    const files = Array.from(e.target.files || []);
-                                                                    if (files.length === 0) return;
-                                                                    const updated = { ...(formData.logoImages || {}) };
-                                                                    if (!updated[logo.id]) updated[logo.id] = {};
-                                                                    if (!updated[logo.id][color.name]) updated[logo.id][color.name] = [];
-                                                                    for (const file of files) {
-                                                                        const optimized = await optimizeImage(file);
-                                                                        const postUrl = await generateUploadUrl();
-                                                                        const result = await fetch(postUrl, {
-                                                                            method: "POST",
-                                                                            headers: { "Content-Type": optimized.type },
-                                                                            body: optimized,
-                                                                        });
-                                                                        const { storageId } = await result.json();
-                                                                        updated[logo.id][color.name] = [...updated[logo.id][color.name], storageId];
-                                                                    }
-                                                                    setFormData(prev => ({ ...prev, logoImages: { ...updated } }));
-                                                                    e.target.value = "";
-                                                                }}
-                                                            />
-                                                        </label>
-                                                    </div>
+                        <h3 className="font-black text-brand-navy mb-1 text-sm md:text-base">Color Images</h3>
+                        <p className="text-[10px] text-gray-400 font-bold mb-4">Upload images for each color. These show when a customer selects that color.</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {formData.colors.map((color) => {
+                                const images = formData.logoImages?.["_default"]?.[color.name] || [];
+                                return (
+                                    <div key={color.name} className="bg-white rounded-xl p-3 border border-gray-100">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }} />
+                                            <span className="text-xs font-bold text-brand-navy">{color.name}</span>
+                                            <span className="text-[10px] text-gray-400 ml-auto">{images.length} image{images.length !== 1 ? "s" : ""}</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5 mb-2">
+                                            {images.map((img, idx) => (
+                                                <div key={idx} className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 group">
+                                                    <img src={typeof img === "string" && !img.startsWith("kg") ? img : ""} alt="" className="w-full h-full object-cover" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const updated = { ...formData.logoImages };
+                                                            updated["_default"][color.name] = updated["_default"][color.name].filter((_, i) => i !== idx);
+                                                            setFormData({ ...formData, logoImages: updated });
+                                                        }}
+                                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                                                    >
+                                                        <X size={14} className="text-white" />
+                                                    </button>
                                                 </div>
-                                            );
-                                        })}
+                                            ))}
+                                            <label className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer hover:border-brand-orange/40 transition-colors bg-gray-50">
+                                                <Plus size={16} className="text-gray-400" />
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    multiple
+                                                    className="hidden"
+                                                    onChange={async (e) => {
+                                                        const files = Array.from(e.target.files || []);
+                                                        if (files.length === 0) return;
+                                                        const updated = { ...(formData.logoImages || {}) };
+                                                        if (!updated["_default"]) updated["_default"] = {};
+                                                        if (!updated["_default"][color.name]) updated["_default"][color.name] = [];
+                                                        for (const file of files) {
+                                                            const optimized = await optimizeImage(file);
+                                                            const postUrl = await generateUploadUrl();
+                                                            const result = await fetch(postUrl, {
+                                                                method: "POST",
+                                                                headers: { "Content-Type": optimized.type },
+                                                                body: optimized,
+                                                            });
+                                                            const { storageId } = await result.json();
+                                                            updated["_default"][color.name] = [...updated["_default"][color.name], storageId];
+                                                        }
+                                                        setFormData(prev => ({ ...prev, logoImages: { ...updated } }));
+                                                        e.target.value = "";
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}

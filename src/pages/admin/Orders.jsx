@@ -11,7 +11,8 @@ import {
     Mail,
     Calendar,
     DollarSign,
-    AlertCircle
+    AlertCircle,
+    Trash2
 } from "lucide-react";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { useAdmin } from "../../context/AdminContext";
@@ -22,7 +23,9 @@ export default function AdminOrders() {
     const updateStatus = useMutation(api.orders.updateStatus);
     const checkNabooStatus = useAction(api.naboopay.getTransaction);
     const deleteNabooTransaction = useAction(api.naboopay.deleteTransaction);
+    const deleteOrderMutation = useMutation(api.orders.deleteOrder);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const isLoading = orders === undefined;
 
@@ -65,6 +68,16 @@ export default function AdminOrders() {
             }
         } catch (err) {
             alert("Failed to update order status. Please try again.");
+        }
+    };
+
+    const handleDeleteOrder = async () => {
+        try {
+            await deleteOrderMutation({ id: selectedOrder._id, adminToken });
+            setSelectedOrder(null);
+            setShowDeleteConfirm(false);
+        } catch (err) {
+            alert("Failed to delete order. Please try again.");
         }
     };
 
@@ -140,12 +153,20 @@ export default function AdminOrders() {
                                     Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
                                 </p>
                             </div>
-                            <button
-                                onClick={() => setSelectedOrder(null)}
-                                className="text-gray-400 hover:text-brand-navy font-bold text-xs uppercase tracking-widest"
-                            >
-                                Close Details
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(true)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs uppercase tracking-widest transition-all"
+                                >
+                                    <Trash2 size={14} /> Delete
+                                </button>
+                                <button
+                                    onClick={() => setSelectedOrder(null)}
+                                    className="text-gray-400 hover:text-brand-navy font-bold text-xs uppercase tracking-widest"
+                                >
+                                    Close Details
+                                </button>
+                            </div>
                         </div>
 
                         <div className="p-8 space-y-10">
@@ -297,6 +318,34 @@ export default function AdminOrders() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200">
+                        <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="h-6 w-6 text-red-600" />
+                        </div>
+                        <h3 className="text-lg font-black text-brand-navy text-center mb-2">Delete Order?</h3>
+                        <p className="text-sm text-gray-500 text-center mb-6">
+                            Are you sure you want to delete order <span className="font-bold text-brand-navy">{selectedOrder?.orderId}</span>? This cannot be undone.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-600 font-bold text-sm hover:bg-gray-200 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteOrder}
+                                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
+                            >
+                                Delete
+                            </button>
                         </div>
                     </div>
                 </div>

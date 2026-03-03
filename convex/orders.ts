@@ -132,3 +132,16 @@ export const updateStatus = mutation({
     await ctx.db.patch(args.id, { status: args.status });
   },
 });
+
+export const deleteOrder = mutation({
+  args: {
+    id: v.id("orders"),
+    adminToken: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust")) {
+      throw new Error("Unauthorized");
+    }
+    await ctx.db.delete(args.id);
+  },
+});
