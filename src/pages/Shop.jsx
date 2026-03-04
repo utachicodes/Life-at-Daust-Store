@@ -87,8 +87,9 @@ export default function Shop() {
       }
     });
 
-    // Also include products without a collection
-    const ungrouped = sorted.filter(p => !p.collection);
+    // Also include products without a collection or with a stale collection slug
+    const knownSlugs = new Set(sortedCollections.map(c => c.slug));
+    const ungrouped = sorted.filter(p => !p.collection || !knownSlugs.has(p.collection));
     if (ungrouped.length > 0) {
       groups["Other Products"] = ungrouped;
     }
