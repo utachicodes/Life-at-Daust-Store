@@ -245,10 +245,6 @@ export default function Cart() {
                 <span className="text-brand-cream/60 font-medium">Est. Shipping</span>
                 <span className="font-bold text-brand-orange uppercase text-xs tracking-widest">Complimentary</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-brand-cream/60 font-medium">Tax</span>
-                <span className="font-bold">Calculated at checkout</span>
-              </div>
             </div>
 
             <div className="h-[1px] bg-white/10 my-8" />

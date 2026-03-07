@@ -1,19 +1,12 @@
-# Task: Fix Console Errors and Logo/Color Variant Display
+# Task: Cart Fixes, Mobile Logo Fix, Deploy & Commit
 
-## Plan - COMPLETED
+## Steps:
 
-### ✅ Step 1: Hide NABOOPAY Console Errors
-- Updated Checkout.jsx to catch Convex action errors
-- Display user-friendly message instead of exposing error details
-- Error message now shows: "Online payment is temporarily unavailable. Please use manual payment method instead."
+- [x] 1. Remove tax from cart summary (CartContext + Cart.jsx)
+- [x] 2. Fix remove item functionality (especially for bundles)
+- [x] 3. Fix mobile logo preview in Navbar
+- [x] 4. Deploy to Convex (npx convex deploy)
+- [x] 5. Commit to GitHub
 
-### ✅ Step 2: Logo Management Verified
-- Logo management already implemented in ProductForm.jsx
-- Similar UX to colors - add with name and optional image upload
-- Variant images section shows logo × color combinations for easy setup
-
-### ✅ Step 3: Fixed Variant Image Display in Cart
-- Updated ProductDetails.jsx to save the currently displayed variant image when adding to cart
-- Now when user selects a color + logo combination, the exact variant image (white hoodie with DAUST logo, black hoodie with LAD logo, etc.) is saved to cart
-- Cart and Checkout pages now show the correct variant image instead of the main product image
+## Status: Completed ✅
 
