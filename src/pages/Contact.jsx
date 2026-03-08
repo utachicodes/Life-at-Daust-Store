@@ -107,14 +107,14 @@ function ContactForm() {
 
 export default function Contact() {
   const info = [
-    { icon: Mail, title: "Support", text: "care@lifeatdaust.com", detail: "24/7 Digital support" },
-    { icon: MapPin, title: "Visit Us", text: "Ngaparou, Mbour", detail: "DAUST Innovation Hub" },
-    { icon: Phone, title: "Call", text: "+221 33 000 00 00", detail: "Mon · Fri, 9am · 6pm" },
+    { icon: Mail, title: "Support", text: "mndiouf@mydaust.org", detail: "24/7 Digital support" },
+    { icon: MapPin, title: "Visit Us", text: "Somone, Mbour", detail: "DAUST Campus" },
+    { icon: Phone, title: "Call", text: "+221 77 396 16 67", detail: "Mon · Fri, 9am · 6pm" },
   ];
 
   const faqs = [
     { question: "When will my order arrive?", answer: "Orders will arrive at Daust within 10-15 business days." },
-    { question: "Are the designs student-made?", answer: "Yes, 100%. Every piece in our collection is designed by DAUST students through our periodic Design Labs." },
+    { question: "Are the designs student-made?", answer: "Yes, 100%. Every piece in our collection is designed by DAUST students." },
   ];
 
   return (
