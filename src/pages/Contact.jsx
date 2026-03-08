@@ -113,10 +113,8 @@ export default function Contact() {
   ];
 
   const faqs = [
-    { question: "When will my order arrive?", answer: "Orders within Dakar are typically delivered within 24-48 hours. International shipping takes 7-10 business days depending on location." },
-    { question: "How do I exchange sizes?", answer: "We offer a 7-day hassle-free exchange policy. Simply bring the item to the campus store or contact our support team to arrange a pickup." },
+    { question: "When will my order arrive?", answer: "Orders will arrive at Daust within 10-15 business days." },
     { question: "Are the designs student-made?", answer: "Yes, 100%. Every piece in our collection is designed by DAUST students through our periodic Design Labs." },
-    { question: "Do you ship worldwide?", answer: "Absolutely. We ship to over 50 countries globally to keep our alumni community connected." },
   ];
 
   return (
