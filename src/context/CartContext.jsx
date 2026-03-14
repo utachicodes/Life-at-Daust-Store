@@ -136,7 +136,7 @@ export function CartProvider({ children }) {
     items.reduce((sum, p) => {
       if (!p.isProductSet) {
         const logoCount = [p.selectedFrontLogo, p.selectedBackLogo, p.selectedSideLogo].filter(Boolean).length;
-        if (logoCount > 1) {
+        if (logoCount === 3) {
           return sum + LOGO_FEE * p.qty;
         }
       }
