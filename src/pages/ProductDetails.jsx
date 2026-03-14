@@ -19,8 +19,6 @@ export default function ProductDetails() {
     const [selectedSize, setSelectedSize] = useState(null);
     const [selectedFrontLogo, setSelectedFrontLogo] = useState(null);
     const [selectedBackLogo, setSelectedBackLogo] = useState(null);
-    const [selectedLeftLogo, setSelectedLeftLogo] = useState(null);
-    const [selectedRightLogo, setSelectedRightLogo] = useState(null);
     const [selectedHoodieType, setSelectedHoodieType] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [logoPreview, setLogoPreview] = useState(null);
@@ -38,8 +36,6 @@ export default function ProductDetails() {
             setSelectedSize(product.sizes?.[0] || null);
             setSelectedFrontLogo(null);
             setSelectedBackLogo(null);
-            setSelectedLeftLogo(null);
-            setSelectedRightLogo(null);
             setSelectedHoodieType(null);
         }
     }, [product]);
@@ -321,6 +317,16 @@ export default function ProductDetails() {
                             </div>
                         )}
 
+                        {/* Additional Logo Fee Notice */}
+                        {selectedFrontLogo && selectedBackLogo && (
+                            <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-2xl">
+                                <Info size={18} className="text-brand-orange flex-shrink-0" />
+                                <p className="text-sm font-bold text-brand-orange">
+                                    +{formatPrice(1000)} additional fee for logos on both front and back
+                                </p>
+                            </div>
+                        )}
+
                         {/* Left Logo Selection */}
                         {product.logos && product.logos.filter(l => !l.positions || l.positions.includes("left")).length > 0 && (
                             <div className="space-y-5">
@@ -565,8 +571,6 @@ export default function ProductDetails() {
                                         selectedSize: selectedSize,
                                         selectedFrontLogo: selectedFrontLogo?.name || null,
                                         selectedBackLogo: selectedBackLogo?.name || null,
-                                        selectedLeftLogo: selectedLeftLogo?.name || null,
-                                        selectedRightLogo: selectedRightLogo?.name || null,
                                     }, quantity);
                                 }}
                             >
