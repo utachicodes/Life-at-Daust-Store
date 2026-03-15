@@ -31,7 +31,7 @@ export const getDiscountEligibility = query({
   args: { phone: v.string() },
   handler: async (ctx, args) => {
     const allOrders = await ctx.db.query("orders").collect();
-    const discountedOrders = allOrders.filter(o => o.discount && o.discount > 0);
+    const discountedOrders = allOrders.filter(o => o.discount && o.discount > 0 && o.status !== "Refunded" && o.status !== "Cancelled");
     const slotsUsed = discountedOrders.length;
 
     const normalized = args.phone.replace(/\s/g, "");
