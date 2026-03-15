@@ -664,7 +664,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                         value={formData.shippingTimeline}
                         onChange={(e) => setFormData({ ...formData, shippingTimeline: e.target.value })}
                         className="w-full bg-gray-50 border-none rounded-xl md:rounded-2xl px-4 md:px-5 py-3 md:py-4 text-sm md:text-base text-brand-navy font-bold focus:ring-2 focus:ring-brand-orange/20 transition-all"
-                        placeholder="e.g. 2-4 days campus ship"
+                        placeholder="e.g. 10-15 days campus ship"
                     />
                 </div>
 
