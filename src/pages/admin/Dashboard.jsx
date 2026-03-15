@@ -10,7 +10,8 @@ import {
     CheckCircle2,
     DollarSign,
     Users,
-    Layers
+    Layers,
+    AlertTriangle
 } from "lucide-react";
 import { formatPrice } from "../../utils/format.js";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
@@ -44,6 +45,13 @@ export default function AdminDashboard() {
     const recentOrders = useMemo(() => {
         return ordersData.slice(0, 5);
     }, [ordersData]);
+
+    const lowStockProducts = useMemo(() => {
+        if (!products) return [];
+        return products
+            .filter(p => p.stock !== undefined && p.stock !== null && p.stock <= 5)
+            .sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0));
+    }, [products]);
 
     const topCategories = useMemo(() => {
         if (!products) return [];
@@ -177,6 +185,32 @@ export default function AdminDashboard() {
                             )}
                         </div>
                     </div>
+
+                    {/* Stock Alerts */}
+                    {lowStockProducts.length > 0 && (
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-orange-100 shadow-2xl shadow-black/[0.02]">
+                            <h2 className="text-base font-[900] text-brand-navy tracking-tight mb-6 flex items-center gap-3">
+                                <AlertTriangle size={18} className="text-brand-orange" />
+                                Stock Alerts
+                                <span className="ml-auto text-[10px] font-black bg-brand-orange/10 text-brand-orange px-2.5 py-1 rounded-full">
+                                    {lowStockProducts.length}
+                                </span>
+                            </h2>
+                            <div className="space-y-3">
+                                {lowStockProducts.map(p => (
+                                    <div key={p._id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 hover:bg-orange-50 transition-colors">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <img src={p.image} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                                            <p className="text-xs font-bold text-brand-navy truncate">{p.name}</p>
+                                        </div>
+                                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-full flex-shrink-0 ${p.stock === 0 ? "bg-red-100 text-red-600" : "bg-orange-100 text-orange-600"}`}>
+                                            {p.stock === 0 ? "Out" : `${p.stock} left`}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Quick Access Card */}
                     <div className="bg-white p-10 rounded-[3rem] border border-gray-100 shadow-2xl shadow-black/[0.02]">

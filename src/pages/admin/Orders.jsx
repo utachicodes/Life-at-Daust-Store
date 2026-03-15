@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import {
@@ -12,11 +12,15 @@ import {
     MapPin,
     DollarSign,
     AlertCircle,
-    Trash2
+    Trash2,
+    Search,
+    Filter,
+    Tag,
+    RotateCcw
 } from "lucide-react";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
-import { useAdmin } from "../../context/AdminContext";
 import { formatPrice } from "../../utils/format.js";
+import { useAdmin } from "../../context/AdminContext";
 
 export default function AdminOrders() {
     const { adminToken } = useAdmin();
@@ -24,13 +28,31 @@ export default function AdminOrders() {
     const updateStatus = useMutation(api.orders.updateStatus);
     const checkNabooStatus = useAction(api.naboopay.getTransaction);
     const deleteNabooTransaction = useAction(api.naboopay.deleteTransaction);
+    const refundNabooTransaction = useAction(api.naboopay.refundTransaction);
+    const [refunding, setRefunding] = useState(false);
     const deleteOrderMutation = useMutation(api.orders.deleteOrder);
     const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All");
 
     const isLoading = orders === undefined;
 
     const selectedOrder = orders?.find((o) => o._id === selectedOrderId) ?? null;
+
+    const ALL_STATUSES = ["All", "Pending Verification", "Pending Payment", "Paid", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded"];
+
+    const filteredOrders = useMemo(() => {
+        if (!orders) return [];
+        return orders.filter(o => {
+            const matchesSearch = !searchTerm ||
+                o.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                o.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                o.customer.phone.includes(searchTerm);
+            const matchesStatus = statusFilter === "All" || o.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+    }, [orders, searchTerm, statusFilter]);
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -41,6 +63,7 @@ export default function AdminOrders() {
             case "Shipped": return "bg-blue-50 text-blue-600";
             case "Delivered": return "bg-green-50 text-green-600";
             case "Cancelled": return "bg-red-50 text-red-600";
+            case "Refunded": return "bg-purple-50 text-purple-600";
             default: return "bg-gray-100 text-gray-600";
         }
     };
@@ -71,6 +94,20 @@ export default function AdminOrders() {
         }
     };
 
+    const handleRefund = async () => {
+        if (!selectedOrder?.naboopayOrderId) return;
+        if (!window.confirm(`Issue a refund for order ${selectedOrder.orderId}? This will contact NabooPay and cannot be undone.`)) return;
+        setRefunding(true);
+        try {
+            await refundNabooTransaction({ naboopayOrderId: selectedOrder.naboopayOrderId });
+            await updateStatus({ id: selectedOrder._id, status: "Refunded", adminToken });
+        } catch (err) {
+            alert(`Refund failed: ${err?.message || "Unknown error"}`);
+        } finally {
+            setRefunding(false);
+        }
+    };
+
     const handleDeleteOrder = async () => {
         try {
             await deleteOrderMutation({ id: selectedOrder._id, adminToken });
@@ -95,13 +132,36 @@ export default function AdminOrders() {
             {/* Orders List */}
             <div className={`${selectedOrder ? "lg:col-span-4" : "lg:col-span-12"} transition-all duration-500`}>
                 <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-gray-50">
-                        <h2 className="text-lg font-black text-brand-navy">All Orders</h2>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{orders.length} total shipments</p>
+                    <div className="p-6 border-b border-gray-50 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-black text-brand-navy">All Orders</h2>
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{filteredOrders.length} / {orders.length}</p>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                            <input
+                                type="text"
+                                placeholder="Search by order ID, name or phone..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-9 pr-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-orange/20"
+                            />
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                            {ALL_STATUSES.map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => setStatusFilter(s)}
+                                    className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all ${statusFilter === s ? "bg-brand-navy text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    <div className="divide-y divide-gray-50 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
-                        {orders.map((order) => (
+                    <div className="divide-y divide-gray-50 max-h-[calc(100vh-350px)] overflow-y-auto pr-1">
+                        {filteredOrders.map((order) => (
                             <button
                                 key={order._id}
                                 onClick={() => setSelectedOrderId(order._id)}
@@ -125,7 +185,7 @@ export default function AdminOrders() {
                             </button>
                         ))}
 
-                        {orders.length === 0 && (
+                        {filteredOrders.length === 0 && (
                             <div className="p-20 text-center">
                                 <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
                                     <Package className="h-8 w-8 text-gray-200" />
@@ -154,6 +214,16 @@ export default function AdminOrders() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
+                                {selectedOrder.naboopayOrderId && selectedOrder.status === "Paid" && (
+                                    <button
+                                        onClick={handleRefund}
+                                        disabled={refunding}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50"
+                                    >
+                                        <RotateCcw size={14} className={refunding ? "animate-spin" : ""} />
+                                        {refunding ? "Refunding..." : "Refund"}
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setShowDeleteConfirm(true)}
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs uppercase tracking-widest transition-all"
@@ -269,7 +339,7 @@ export default function AdminOrders() {
                                                 <User size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black uppercase text-gray-400">FullName</p>
+                                                <p className="text-[10px] font-black uppercase text-gray-400">Full Name</p>
                                                 <p className="font-bold text-brand-navy">{selectedOrder.customer.name}</p>
                                             </div>
                                         </div>
@@ -287,7 +357,7 @@ export default function AdminOrders() {
                                                 <MapPin size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black uppercase text-gray-400">Location</p>
+                                                <p className="text-[10px] font-black uppercase text-gray-400">Delivery Location</p>
                                                 <p className="font-bold text-brand-navy">{selectedOrder.customer.location}</p>
                                             </div>
                                         </div>
@@ -311,9 +381,29 @@ export default function AdminOrders() {
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="p-4 bg-brand-navy text-white flex justify-between items-center">
-                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Grand Total</span>
-                                            <span className="text-lg font-black">{formatPrice(selectedOrder?.total || 0)}</span>
+                                        <div className="bg-brand-navy text-white divide-y divide-white/10">
+                                            <div className="px-4 py-2.5 flex justify-between items-center">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Subtotal</span>
+                                                <span className="text-sm font-bold">{formatPrice(selectedOrder.subtotal || 0)}</span>
+                                            </div>
+                                            {selectedOrder.deliveryFee > 0 && (
+                                                <div className="px-4 py-2.5 flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Delivery</span>
+                                                    <span className="text-sm font-bold">{formatPrice(selectedOrder.deliveryFee)}</span>
+                                                </div>
+                                            )}
+                                            {selectedOrder.discount > 0 && (
+                                                <div className="px-4 py-2.5 flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-green-400 flex items-center gap-1.5">
+                                                        <Tag size={10} /> Early Discount (15%)
+                                                    </span>
+                                                    <span className="text-sm font-bold text-green-400">-{formatPrice(selectedOrder.discount)}</span>
+                                                </div>
+                                            )}
+                                            <div className="px-4 py-3 flex justify-between items-center">
+                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Grand Total</span>
+                                                <span className="text-lg font-black">{formatPrice(selectedOrder?.total || 0)}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

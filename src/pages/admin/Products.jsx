@@ -8,7 +8,7 @@ import {
     Plus,
     Search,
     ExternalLink,
-    MoreVertical,
+    Copy,
     Filter,
     Package,
     AlertCircle
@@ -62,6 +62,12 @@ export default function AdminProducts() {
     const handleFormSave = () => {
         setIsFormOpen(false);
         setEditingProduct(null);
+    };
+
+    const handleDuplicate = (product) => {
+        const { _id, _creationTime, ...rest } = product;
+        setEditingProduct({ ...rest, name: `${product.name} (Copy)` });
+        setIsFormOpen(true);
     };
 
     if (isLoading) {
@@ -177,6 +183,13 @@ export default function AdminProducts() {
                                                 title="Edit Product"
                                             >
                                                 <Edit2 size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDuplicate(p)}
+                                                className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all"
+                                                title="Duplicate Product"
+                                            >
+                                                <Copy size={18} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(p._id)}

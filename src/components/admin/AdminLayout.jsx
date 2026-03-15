@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import {
     LayoutDashboard,
     Package,
@@ -14,9 +16,11 @@ import {
 import logo from "../../assets/logo.png";
 
 export default function AdminLayout() {
-    const { isAdmin, logout } = useAdmin();
+    const { isAdmin, logout, adminToken } = useAdmin();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
+    const orders = useQuery(api.orders.list, adminToken ? { adminToken } : "skip");
+    const pendingCount = orders?.filter(o => o.status === "Pending Verification" || o.status === "Pending Payment").length ?? 0;
 
     if (!isAdmin) {
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
@@ -84,13 +88,25 @@ export default function AdminLayout() {
                                         : "text-white/40 hover:text-white hover:bg-white/5"
                                     }`}
                             >
-                                <Icon
-                                    size={20}
-                                    className={`flex-shrink-0 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`}
-                                />
+                                <div className="relative flex-shrink-0">
+                                    <Icon
+                                        size={20}
+                                        className={`transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`}
+                                    />
+                                    {item.path === "/admin/orders" && pendingCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">
+                                            {pendingCount > 9 ? "9+" : pendingCount}
+                                        </span>
+                                    )}
+                                </div>
                                 {isSidebarOpen && (
-                                    <span className="text-xs font-[800] uppercase tracking-widest whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
+                                    <span className="text-xs font-[800] uppercase tracking-widest whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300 flex-1">
                                         {item.label}
+                                    </span>
+                                )}
+                                {isSidebarOpen && item.path === "/admin/orders" && pendingCount > 0 && (
+                                    <span className="text-[9px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
+                                        {pendingCount}
                                     </span>
                                 )}
                                 {!isSidebarOpen && isActive && (

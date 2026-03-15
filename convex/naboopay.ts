@@ -6,6 +6,7 @@ import { api } from "./_generated/api";
 declare const process: { env: Record<string, string | undefined> };
 
 const NABOOPAY_API_URL = "https://api.naboopay.com/api/v2/transactions";
+const NABOOPAY_REFUND_URL = "https://api.naboopay.com/api/v2/refund";
 
 export const createTransaction = action({
   args: {
@@ -115,6 +116,37 @@ export const getTransaction = action({
 
     return await response.json();
   }
+});
+
+export const refundTransaction = action({
+  args: { naboopayOrderId: v.string() },
+  handler: async (ctx, args) => {
+    const token = process.env.NABOOPAY_TOKEN;
+    if (!token) {
+      throw new Error("NABOOPAY_TOKEN is not set in environment variables");
+    }
+
+    const response = await fetch(`${NABOOPAY_REFUND_URL}/${args.naboopayOrderId}`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      let message = "NabooPay refund request failed";
+      try {
+        const body = await response.json();
+        message = body?.message || body?.error || body?.detail || message;
+      } catch {
+        // ignore parse errors
+      }
+      throw new Error(`Refund failed (${response.status}): ${message}`);
+    }
+
+    return await response.json();
+  },
 });
 
 export const deleteTransaction = action({
