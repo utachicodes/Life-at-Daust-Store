@@ -183,6 +183,23 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
 
     const defaultSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
+    // Strip resolved https:// URLs from logoImages — only keep storage IDs (start with "kg")
+    const sanitizeLogoImages = (logoImages) => {
+        if (!logoImages || typeof logoImages !== "object") return logoImages;
+        const out = {};
+        for (const [logoKey, colorMap] of Object.entries(logoImages)) {
+            out[logoKey] = {};
+            if (colorMap && typeof colorMap === "object") {
+                for (const [colorName, images] of Object.entries(colorMap)) {
+                    if (Array.isArray(images)) {
+                        out[logoKey][colorName] = images.filter(img => typeof img === "string" && img.startsWith("kg"));
+                    }
+                }
+            }
+        }
+        return out;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -196,13 +213,25 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                 finalImageUrl = storageId;
             }
 
+            // If the image is a resolved https:// URL (not a new upload), keep the original storage ID
+            const imageToSave = imageFile ? finalImageUrl : (product?.image?.startsWith("kg") ? product.image : finalImageUrl);
+
             const payload = {
-                ...formData,
+                name: formData.name,
+                category: formData.category,
                 price: parseFloat(formData.price),
                 rating: parseFloat(formData.rating),
+                description: formData.description || undefined,
+                badge: formData.badge || undefined,
+                image: imageToSave,
+                colors: formData.colors,
+                sizes: formData.sizes,
+                logos: formData.logos,
+                logoImages: sanitizeLogoImages(formData.logoImages),
+                collection: formData.collection || undefined,
                 stock: formData.stock !== "" ? parseInt(formData.stock) : undefined,
-                image: finalImageUrl,
                 shippingTimeline: formData.shippingTimeline || undefined,
+                hoodieTypes: formData.hoodieTypes,
             };
 
             if (product) {
@@ -212,8 +241,9 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
             }
 
             onSave();
-        } catch {
-            setError("An error occurred while saving the product. Please try again.");
+        } catch (err) {
+            console.error("Product save error:", err);
+            setError(err?.message || "An error occurred while saving the product. Please try again.");
         } finally {
             setLoading(false);
         }
