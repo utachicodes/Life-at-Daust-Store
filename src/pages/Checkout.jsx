@@ -33,6 +33,13 @@ export default function Checkout() {
   const updateNabooPayDetails = useMutation(api.orders.updateNabooPayDetails);
   const createNabooPayTransaction = useAction(api.naboopay.createTransaction);
 
+  const orderCount = useQuery(api.orders.getOrderCount);
+
+  const promoApplies = orderCount !== undefined && orderCount < 10;
+  const promoOrderNumber = orderCount !== undefined ? orderCount + 1 : null;
+  const promoDiscount = promoApplies ? Math.round(subtotal * 0.2) : 0;
+  const discountedSubtotal = subtotal - promoDiscount;
+
   const deliveryFee = useMemo(() => {
     const loc = locations.find(l => l.name === form.location);
     return loc ? loc.fee : 0;
@@ -186,6 +193,16 @@ export default function Checkout() {
         <div className="lg:col-span-7 animate-in slide-in-from-left-5 duration-700">
           <h1 className="text-3xl sm:text-[var(--text-4xl)] font-black text-brand-navy tracking-tighter mb-3 sm:mb-4">Complete Your Order</h1>
           <p className="text-gray-500 mb-8 sm:mb-12 text-base sm:text-lg">Enter your details to finalize your university essentials.</p>
+
+          {promoApplies && (
+            <div className="mb-10 p-5 bg-brand-orange/10 border border-brand-orange/30 rounded-2xl flex items-center gap-4 animate-in bounce-in duration-500">
+              <Tag size={20} className="flex-shrink-0 text-brand-orange" />
+              <div>
+                <p className="text-brand-orange font-black text-sm">Launch Special! You're order #{promoOrderNumber} — 20% off your entire order!</p>
+                <p className="text-brand-orange/70 text-xs font-medium mt-0.5">This exclusive discount applies to the first 10 orders only.</p>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="mb-8 sm:mb-10 p-4 sm:p-5 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 sm:gap-4 text-red-700 text-xs sm:text-sm font-bold animate-in bounce-in duration-500">
@@ -415,6 +432,12 @@ export default function Checkout() {
                   <span>Subtotal</span>
                   <span>{fmt(subtotal)}</span>
                 </div>
+                {promoApplies && (
+                  <div className="flex justify-between items-center text-brand-orange">
+                    <span className="flex items-center gap-1.5"><Tag size={13} /> Launch Promo (20% off)</span>
+                    <span>-{fmt(promoDiscount)}</span>
+                  </div>
+                )}
                 {totalSavings > 0 && (
                   <div className="flex justify-between items-center text-green-400">
                     <span>Bundle Savings</span>

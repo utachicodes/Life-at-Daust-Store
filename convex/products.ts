@@ -127,9 +127,7 @@ export const listProductSets = query({
                     };
                 })
             );
-            // Filter out null products (deleted products)
             const validProducts = resolvedProducts.filter(p => p !== null);
-            // Calculate original price (sum of individual product prices)
             const originalPrice = validProducts.reduce(
                 (sum, item) => sum + (item?.productPrice || 0) * (item?.quantity || 1),
                 0
