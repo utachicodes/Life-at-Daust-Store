@@ -98,9 +98,11 @@ export const addOrder = mutation({
     }
 
     const proofOfPaymentUrl = args.paymentStorageId ? (await ctx.storage.getUrl(args.paymentStorageId)) ?? undefined : undefined;
+    const initialStatus = args.paymentMethod === "naboopay" ? "Pending Payment" : "Pending Verification";
     const orderId = await ctx.db.insert("orders", {
       ...args,
-      status: args.paymentMethod === "naboopay" ? "Pending Payment" : "Pending Verification",
+      status: initialStatus,
+      statusHistory: [{ status: initialStatus, timestamp: Date.now() }],
       proofOfPaymentUrl,
       createdAt: Date.now(),
     });
@@ -165,7 +167,35 @@ export const updateStatus = mutation({
     if (!isAuthorized) {
       throw new Error("Unauthorized - Invalid or expired session");
     }
-    await ctx.db.patch(args.id, { status: args.status });
+    const order = await ctx.db.get(args.id);
+    const history = order?.statusHistory ?? [];
+    await ctx.db.patch(args.id, {
+      status: args.status,
+      statusHistory: [...history, { status: args.status, timestamp: Date.now() }],
+    });
+  },
+});
+
+export const bulkUpdateStatus = mutation({
+  args: {
+    ids: v.array(v.id("orders")),
+    status: v.string(),
+    adminToken: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const isAuthorized = await verifyAdminToken(ctx, args.adminToken);
+    if (!isAuthorized) {
+      throw new Error("Unauthorized - Invalid or expired session");
+    }
+    const now = Date.now();
+    await Promise.all(args.ids.map(async (id) => {
+      const order = await ctx.db.get(id);
+      const history = order?.statusHistory ?? [];
+      await ctx.db.patch(id, {
+        status: args.status,
+        statusHistory: [...history, { status: args.status, timestamp: now }],
+      });
+    }));
   },
 });
 

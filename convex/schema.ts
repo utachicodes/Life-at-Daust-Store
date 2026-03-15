@@ -81,6 +81,10 @@ export default defineSchema({
         discount: v.optional(v.number()),
         total: v.number(),
         status: v.string(),
+        statusHistory: v.optional(v.array(v.object({
+            status: v.string(),
+            timestamp: v.number(),
+        }))),
         paymentMethod: v.optional(v.string()),
         paymentStorageId: v.optional(v.id("_storage")),
         proofOfPaymentUrl: v.optional(v.string()),
