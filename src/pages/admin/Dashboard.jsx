@@ -30,7 +30,8 @@ export default function AdminDashboard() {
     const stats = useMemo(() => {
         if (!products) return [];
 
-        const totalRevenue = ordersData.reduce((sum, order) => sum + (order?.total || 0), 0);
+        const CONFIRMED_STATUSES = ["Paid", "Processing", "Shipped", "Delivered"];
+        const totalRevenue = ordersData.filter(o => CONFIRMED_STATUSES.includes(o.status)).reduce((sum, order) => sum + (order?.total || 0), 0);
         const activeOrders = ordersData.filter(o => o.status === "Processing" || o.status === "Shipped").length;
         const totalProducts = products.length;
         const completedOrders = ordersData.filter(o => o.status === "Delivered").length;
@@ -63,8 +64,9 @@ export default function AdminDashboard() {
             d.setHours(0, 0, 0, 0);
             const dayStart = d.getTime();
             const dayEnd = dayStart + 86400000;
+            const CONFIRMED = ["Paid", "Processing", "Shipped", "Delivered"];
             const revenue = ordersData
-                .filter(o => o.createdAt >= dayStart && o.createdAt < dayEnd)
+                .filter(o => o.createdAt >= dayStart && o.createdAt < dayEnd && CONFIRMED.includes(o.status))
                 .reduce((sum, o) => sum + (o.total || 0), 0);
             return {
                 day: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
@@ -197,9 +199,12 @@ export default function AdminDashboard() {
                                         <p className="font-[900] text-brand-navy text-lg tracking-tighter mb-1">{formatPrice(order.total)}</p>
                                         <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{new Date(order.createdAt).toLocaleDateString()}</p>
                                     </div>
-                                    <span className={`text-[10px] font-black uppercase tracking-[0.15em] px-5 py-2 rounded-full border ${order.status === "Processing" ? "bg-brand-orange/5 text-brand-orange border-brand-orange/10" :
+                                    <span className={`text-[10px] font-black uppercase tracking-[0.15em] px-5 py-2 rounded-full border ${
+                                        order.status === "Processing" ? "bg-brand-orange/5 text-brand-orange border-brand-orange/10" :
                                         order.status === "Shipped" ? "bg-blue-50 text-blue-600 border-blue-100" :
-                                            "bg-green-50 text-green-600 border-green-100"
+                                        order.status === "Pending Payment" ? "bg-yellow-50 text-yellow-600 border-yellow-100" :
+                                        order.status === "Refunded" ? "bg-purple-50 text-purple-600 border-purple-100" :
+                                        "bg-green-50 text-green-600 border-green-100"
                                         }`}>
                                         {order.status}
                                     </span>
