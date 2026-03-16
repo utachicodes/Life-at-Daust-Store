@@ -95,16 +95,16 @@ export default function ProductSetCard({ productSet }) {
 
           {/* Badge */}
           {productSet.badge && (
-            <div className="absolute top-4 left-4 bg-brand-orange text-white px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg">
+            <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-brand-orange text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-xs font-black uppercase tracking-wider shadow-lg">
               {productSet.badge}
             </div>
           )}
 
           {/* Savings Badge */}
           {productSet.savings > 0 && (
-            <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
-              <Tag size={12} />
-              Save {formatPrice(productSet.savings)}
+            <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-green-500 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[9px] sm:text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+              <Tag size={10} />
+              <span className="hidden sm:inline">Save </span>{formatPrice(productSet.savings)}
             </div>
           )}
 
@@ -123,27 +123,27 @@ export default function ProductSetCard({ productSet }) {
         </div>
 
         {/* Content Section */}
-        <div className="p-6">
-          <h3 className="text-lg font-black text-brand-navy group-hover:text-brand-orange transition-colors duration-300 mb-2">
+        <div className="p-3 sm:p-6">
+          <h3 className="text-sm sm:text-lg font-black text-brand-navy group-hover:text-brand-orange transition-colors duration-300 mb-1 sm:mb-2 leading-tight">
             {productSet.name}
           </h3>
 
           {productSet.description && (
-            <p className="text-sm text-gray-500 mb-4 line-clamp-2">
+            <p className="hidden sm:block text-sm text-gray-500 mb-4 line-clamp-2">
               {productSet.description}
             </p>
           )}
 
           {/* Products Included */}
-          <div className="mb-4">
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+          <div className="mb-2 sm:mb-4">
+            <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1 sm:mb-2">
               Includes:
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1 sm:gap-2">
               {productSet.products?.map((item, idx) => (
                 <span
                   key={idx}
-                  className="text-xs font-bold text-gray-600 bg-gray-50 px-2 py-1 rounded-lg"
+                  className="text-[10px] sm:text-xs font-bold text-gray-600 bg-gray-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg"
                 >
                   {item.quantity}x {item.productName}
                 </span>
@@ -154,19 +154,19 @@ export default function ProductSetCard({ productSet }) {
           {/* Price Section */}
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-xs text-gray-400 font-bold line-through mb-1">
+              <p className="text-[10px] sm:text-xs text-gray-400 font-bold line-through mb-0.5 sm:mb-1">
                 {formatPrice(productSet.originalPrice)}
               </p>
-              <p className="text-2xl font-black text-brand-navy">
+              <p className="text-base sm:text-2xl font-black text-brand-navy">
                 {formatPrice(productSet.specialPrice)}
               </p>
             </div>
             <button
               onClick={handleAddToCart}
-              className="flex items-center gap-1 text-sm font-bold text-brand-orange hover:text-brand-navy transition-colors"
+              className="flex items-center gap-1 text-xs sm:text-sm font-bold text-brand-orange hover:text-brand-navy transition-colors"
             >
-              Add to Bag
-              <ArrowRight size={16} />
+              <span className="hidden sm:inline">Add to Bag</span>
+              <ArrowRight size={14} />
             </button>
           </div>
         </div>

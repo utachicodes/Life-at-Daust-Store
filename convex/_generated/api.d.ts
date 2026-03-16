@@ -18,6 +18,7 @@ import type * as naboopay from "../naboopay.js";
 import type * as orders from "../orders.js";
 import type * as products from "../products.js";
 import type * as seedCollections from "../seedCollections.js";
+import type * as settings from "../settings.js";
 
 import type {
   ApiFromModules,
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   orders: typeof orders;
   products: typeof products;
   seedCollections: typeof seedCollections;
+  settings: typeof settings;
 }>;
 
 /**
