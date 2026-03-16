@@ -1,20 +1,24 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { Upload, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, Film, Loader2 } from "lucide-react";
+import { Upload, Trash2, ChevronUp, ChevronDown, Image as ImageIcon, Film, Loader2, Play } from "lucide-react";
 import { optimizeImage } from "../../utils/imageOptimizer";
 import { useAdmin } from "../../context/AdminContext";
 
 export default function HeroSettings() {
     const { adminToken } = useAdmin();
     const media = useQuery(api.settings.getHeroMediaAdmin, adminToken ? { adminToken } : "skip") || [];
+    const reels = useQuery(api.settings.getReelVideosAdmin, adminToken ? { adminToken } : "skip") || [];
     const updateHeroMedia = useMutation(api.settings.updateHeroMedia);
+    const updateReelVideos = useMutation(api.settings.updateReelVideos);
     const generateUploadUrl = useMutation(api.products.generateUploadUrl);
 
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [reelUploading, setReelUploading] = useState(false);
+    const [reelSaving, setReelSaving] = useState(false);
 
     const handleUpload = async (e) => {
         const files = Array.from(e.target.files || []);
@@ -62,6 +66,62 @@ export default function HeroSettings() {
             setError(err?.message || "Delete failed.");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleReelUpload = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        setReelUploading(true);
+        setError("");
+        try {
+            const newIds = [];
+            for (const file of files) {
+                const postUrl = await generateUploadUrl();
+                const result = await fetch(postUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": file.type },
+                    body: file,
+                });
+                const { storageId } = await result.json();
+                newIds.push(storageId);
+            }
+            const current = reels.map(r => r.storageId);
+            await updateReelVideos({ reelVideos: [...current, ...newIds], adminToken });
+            setSuccess(`${newIds.length} reel${newIds.length > 1 ? "s" : ""} uploaded.`);
+            setTimeout(() => setSuccess(""), 3000);
+        } catch (err) {
+            setError(err?.message || "Reel upload failed.");
+        } finally {
+            setReelUploading(false);
+            e.target.value = "";
+        }
+    };
+
+    const handleReelDelete = async (storageId) => {
+        const updated = reels.filter(r => r.storageId !== storageId).map(r => r.storageId);
+        setReelSaving(true);
+        try {
+            await updateReelVideos({ reelVideos: updated, adminToken });
+        } catch (err) {
+            setError(err?.message || "Delete failed.");
+        } finally {
+            setReelSaving(false);
+        }
+    };
+
+    const handleReelMove = async (index, dir) => {
+        const ids = reels.map(r => r.storageId);
+        const newIndex = index + dir;
+        if (newIndex < 0 || newIndex >= ids.length) return;
+        [ids[index], ids[newIndex]] = [ids[newIndex], ids[index]];
+        setReelSaving(true);
+        try {
+            await updateReelVideos({ reelVideos: ids, adminToken });
+        } catch (err) {
+            setError(err?.message || "Reorder failed.");
+        } finally {
+            setReelSaving(false);
         }
     };
 
@@ -200,6 +260,75 @@ export default function HeroSettings() {
                     <li>Videos play automatically, muted, on loop. Hover to preview in admin.</li>
                     <li>Recommended image size: 1920×1080px or wider.</li>
                 </ul>
+            </div>
+
+            {/* ── Divider ── */}
+            <div className="border-t border-gray-100 pt-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h2 className="text-2xl font-[900] text-brand-navy tracking-tight flex items-center gap-3">
+                            <Play size={20} className="text-brand-orange" />
+                            Campus Reels
+                        </h2>
+                        <p className="text-gray-400 font-medium mt-1">Portrait (9:16) videos shown in the homepage reel section.</p>
+                    </div>
+                    <label className={`cursor-pointer inline-flex items-center gap-2 px-6 py-3 bg-brand-orange text-white rounded-2xl font-bold text-sm hover:bg-brand-navy transition-all duration-300 shadow-lg ${reelUploading ? "opacity-60 pointer-events-none" : ""}`}>
+                        {reelUploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+                        {reelUploading ? "Uploading…" : "Upload Reels"}
+                        <input
+                            type="file"
+                            accept="video/*"
+                            multiple
+                            className="hidden"
+                            onChange={handleReelUpload}
+                            disabled={reelUploading}
+                        />
+                    </label>
+                </div>
+
+                {reels.length === 0 ? (
+                    <div className="text-center py-16 bg-white rounded-[2.5rem] border border-dashed border-gray-200">
+                        <div className="inline-flex p-5 bg-gray-50 rounded-2xl mb-3">
+                            <Film size={32} className="text-gray-300" />
+                        </div>
+                        <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-xs mb-1">No reels yet</p>
+                        <p className="text-gray-300 text-sm">Upload vertical (9:16) videos to display on the homepage.</p>
+                    </div>
+                ) : (
+                    <div className="flex gap-4 overflow-x-auto pb-2">
+                        {reels.map((reel, index) => (
+                            <div key={reel.storageId} className="flex-shrink-0 w-40 bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden group">
+                                <div className="relative aspect-[9/16] bg-gray-100 overflow-hidden">
+                                    <video
+                                        src={reel.url}
+                                        muted
+                                        loop
+                                        playsInline
+                                        className="w-full h-full object-cover"
+                                        onMouseEnter={e => e.target.play()}
+                                        onMouseLeave={e => { e.target.pause(); e.target.currentTime = 0; }}
+                                    />
+                                    <div className="absolute top-2 left-2 bg-brand-navy/80 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                                        #{index + 1}
+                                    </div>
+                                </div>
+                                <div className="p-2 flex items-center justify-between">
+                                    <div className="flex items-center gap-0.5">
+                                        <button onClick={() => handleReelMove(index, -1)} disabled={index === 0 || reelSaving} className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 transition-colors">
+                                            <ChevronUp size={13} className="text-brand-navy" />
+                                        </button>
+                                        <button onClick={() => handleReelMove(index, 1)} disabled={index === reels.length - 1 || reelSaving} className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 transition-colors">
+                                            <ChevronDown size={13} className="text-brand-navy" />
+                                        </button>
+                                    </div>
+                                    <button onClick={() => handleReelDelete(reel.storageId)} disabled={reelSaving} className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30">
+                                        <Trash2 size={13} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

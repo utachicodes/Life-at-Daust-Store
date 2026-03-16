@@ -102,5 +102,6 @@ export default defineSchema({
             storageId: v.string(),
             type: v.union(v.literal("image"), v.literal("video")),
         }))),
+        reelVideos: v.optional(v.array(v.string())),
     }),
 });

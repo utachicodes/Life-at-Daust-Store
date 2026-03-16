@@ -177,6 +177,7 @@ export default function Home() {
   const scrollRef = useRef(null);
   const products = useQuery(api.products.list);
   const heroMedia = useQuery(api.settings.getHeroMedia) || [];
+  const reelVideos = useQuery(api.settings.getReelVideos) || [];
   const [heroIdx, setHeroIdx] = useState(0);
 
   useEffect(() => {
@@ -271,7 +272,45 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4 ── Removed Brand Stats Section ── */}
+      {/* 4 ── CAMPUS REELS ── */}
+      {reelVideos.length > 0 && (
+        <section className="bg-brand-navy py-20 sm:py-28 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 sm:mb-14 gap-4">
+              <div>
+                <span className="inline-block text-brand-orange text-[11px] font-[900] uppercase tracking-[0.22em] mb-3 px-3 py-1.5 bg-brand-orange/10 rounded-full">
+                  Campus Life
+                </span>
+                <h2 className="text-[var(--text-4xl)] font-[900] text-white tracking-tight">
+                  Life at DAUST
+                </h2>
+                <p className="text-white/40 text-base mt-2 max-w-md">
+                  Real moments. Real students. Real DAUST.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+              {reelVideos.map((url, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-[180px] sm:w-[210px] aspect-[9/16] rounded-2xl overflow-hidden bg-white/5 group relative shadow-2xl shadow-black/40"
+                >
+                  <video
+                    src={url}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 5 ── PRODUCT SPOTLIGHT ── */}
       {featuredProduct && (
