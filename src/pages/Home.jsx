@@ -176,18 +176,18 @@ export default function Home() {
   const collections = useQuery(api.collections.list);
   const scrollRef = useRef(null);
   const products = useQuery(api.products.list);
-  const heroImages = useQuery(api.settings.getHeroImages) || [];
+  const heroMedia = useQuery(api.settings.getHeroMedia) || [];
   const [heroIdx, setHeroIdx] = useState(0);
 
   useEffect(() => {
-    if (heroImages.length <= 1) return;
+    if (heroMedia.length <= 1) return;
     const interval = setInterval(() => {
-      setHeroIdx(i => (i + 1) % heroImages.length);
+      setHeroIdx(i => (i + 1) % heroMedia.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [heroImages.length]);
+  }, [heroMedia.length]);
 
-  const heroImage = heroImages.length > 0 ? heroImages[heroIdx] : "/assets/DaustianShoot/Homepage.jpg";
+  const currentSlide = heroMedia.length > 0 ? heroMedia[heroIdx] : null;
 
   const featuredProduct = useMemo(() => {
     if (!products) return null;
@@ -218,7 +218,8 @@ export default function Home() {
         title="Welcome to the Life At Daust Store"
         subtitle="Campus apparel and essentials designed by students, made for the DAUST community."
         cta="Shop Collection"
-        image={heroImage}
+        image={currentSlide?.type === "image" ? currentSlide.url : (!currentSlide ? "/assets/DaustianShoot/Homepage.jpg" : undefined)}
+        video={currentSlide?.type === "video" ? currentSlide.url : undefined}
         to="/shop"
       />
 

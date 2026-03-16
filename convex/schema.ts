@@ -98,6 +98,9 @@ export default defineSchema({
         createdAt: v.number(),
     }).index("by_token", ["token"]),
     siteSettings: defineTable({
-        heroImages: v.optional(v.array(v.string())),
+        heroMedia: v.optional(v.array(v.object({
+            storageId: v.string(),
+            type: v.union(v.literal("image"), v.literal("video")),
+        }))),
     }),
 });

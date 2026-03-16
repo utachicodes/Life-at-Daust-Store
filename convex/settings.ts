@@ -2,41 +2,47 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { verifyAdminToken } from "./auth";
 
-// Public: returns resolved URLs for the storefront
-export const getHeroImages = query({
+const mediaItem = v.object({
+    storageId: v.string(),
+    type: v.union(v.literal("image"), v.literal("video")),
+});
+
+// Public: returns {url, type}[] for the storefront
+export const getHeroMedia = query({
     args: {},
     handler: async (ctx) => {
         const settings = await ctx.db.query("siteSettings").first();
-        const images = settings?.heroImages || [];
-        return await Promise.all(images.map(async (id) => {
-            if (typeof id === "string" && id.startsWith("kg")) {
-                return (await ctx.storage.getUrl(id)) || id;
-            }
-            return id;
-        }));
+        const media = settings?.heroMedia || [];
+        return await Promise.all(media.map(async (item) => ({
+            type: item.type,
+            url: item.storageId.startsWith("kg")
+                ? ((await ctx.storage.getUrl(item.storageId)) || item.storageId)
+                : item.storageId,
+        })));
     },
 });
 
-// Admin: returns both storageId and resolved URL
-export const getHeroImagesAdmin = query({
+// Admin: returns {storageId, url, type}[]
+export const getHeroMediaAdmin = query({
     args: { adminToken: v.string() },
     handler: async (ctx, args) => {
         const isAuthorized = await verifyAdminToken(ctx, args.adminToken);
         if (!isAuthorized) throw new Error("Unauthorized");
         const settings = await ctx.db.query("siteSettings").first();
-        const images = settings?.heroImages || [];
-        return await Promise.all(images.map(async (storageId) => ({
-            storageId,
-            url: typeof storageId === "string" && storageId.startsWith("kg")
-                ? ((await ctx.storage.getUrl(storageId)) || storageId)
-                : storageId,
+        const media = settings?.heroMedia || [];
+        return await Promise.all(media.map(async (item) => ({
+            storageId: item.storageId,
+            type: item.type,
+            url: item.storageId.startsWith("kg")
+                ? ((await ctx.storage.getUrl(item.storageId)) || item.storageId)
+                : item.storageId,
         })));
     },
 });
 
-export const updateHeroImages = mutation({
+export const updateHeroMedia = mutation({
     args: {
-        heroImages: v.array(v.string()),
+        heroMedia: v.array(mediaItem),
         adminToken: v.string(),
     },
     handler: async (ctx, args) => {
@@ -44,9 +50,9 @@ export const updateHeroImages = mutation({
         if (!isAuthorized) throw new Error("Unauthorized");
         const existing = await ctx.db.query("siteSettings").first();
         if (existing) {
-            await ctx.db.patch(existing._id, { heroImages: args.heroImages });
+            await ctx.db.patch(existing._id, { heroMedia: args.heroMedia });
         } else {
-            await ctx.db.insert("siteSettings", { heroImages: args.heroImages });
+            await ctx.db.insert("siteSettings", { heroMedia: args.heroMedia });
         }
     },
 });
