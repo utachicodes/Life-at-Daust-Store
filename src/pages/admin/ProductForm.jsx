@@ -185,7 +185,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
 
     const defaultSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
-    // Strip resolved https:// URLs from logoImages — only keep storage IDs (start with "kg")
+    // Keep storage IDs (start with "kg") and resolved Convex storage URLs (https://)
     const sanitizeLogoImages = (logoImages) => {
         if (!logoImages || typeof logoImages !== "object") return logoImages;
         const out = {};
@@ -194,7 +194,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
             if (colorMap && typeof colorMap === "object") {
                 for (const [colorName, images] of Object.entries(colorMap)) {
                     if (Array.isArray(images)) {
-                        out[logoKey][colorName] = images.filter(img => typeof img === "string" && img.startsWith("kg"));
+                        out[logoKey][colorName] = images.filter(img => typeof img === "string" && (img.startsWith("kg") || img.startsWith("https://")));
                     }
                 }
             }
@@ -627,7 +627,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                         <div className="flex flex-wrap gap-1.5 mb-2">
                                             {images.map((img, idx) => (
                                                 <div key={idx} className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 group">
-                                                    <img src={typeof img === "string" && !img.startsWith("kg") ? img : ""} alt="" className="w-full h-full object-cover" />
+                                                    <img src={typeof img === "string" ? img : ""} alt="" className="w-full h-full object-cover" />
                                                     <button
                                                         type="button"
                                                         onClick={() => {
