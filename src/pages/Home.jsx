@@ -277,7 +277,7 @@ export default function Home() {
 
       {/* 4 ── CAMPUS REELS ── */}
       {reelVideos.length > 0 && (
-        <section className="bg-brand-navy py-20 sm:py-28 overflow-hidden">
+        <section className="bg-brand-navy pt-20 sm:pt-28 pb-12 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 sm:mb-14 gap-4">
               <div>
@@ -318,7 +318,7 @@ export default function Home() {
       {/* 5 ── PRODUCT SPOTLIGHT ── */}
       {featuredProduct && (
         <section className="bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
             <div ref={spotlightRef} className="section-reveal grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
               {/* Image */}
@@ -378,7 +378,7 @@ export default function Home() {
       )}
 
       {/* 6 ── TRENDING NOW ── */}
-      <section className="bg-brand-cream py-20 sm:py-28">
+      <section className="bg-brand-cream pt-14 sm:pt-20 pb-20 sm:pb-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div ref={trendingRef} className="section-reveal">
             <div className="flex items-end justify-between mb-10 sm:mb-14">
