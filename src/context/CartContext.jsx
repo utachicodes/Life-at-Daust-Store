@@ -173,9 +173,8 @@ export function CartProvider({ children }) {
     items.reduce((sum, p) => {
       if (!p.isProductSet) {
         const logoCount = [p.selectedFrontLogo, p.selectedBackLogo, p.selectedSideLogo].filter(Boolean).length;
-        if (logoCount === 3) {
-          return sum + LOGO_FEE * p.qty;
-        }
+        const extraLogos = Math.max(0, logoCount - 2);
+        return sum + extraLogos * LOGO_FEE * p.qty;
       }
       return sum;
     }, 0),

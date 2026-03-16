@@ -371,14 +371,19 @@ export default function ProductDetails() {
                         )}
 
                         {/* Additional Logo Fee Notice */}
-                        {selectedFrontLogos.length > 0 && selectedBackLogos.length > 0 && selectedSideLogos.length > 0 ? (
-                            <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-2xl">
-                                <Info size={18} className="text-brand-orange flex-shrink-0" />
-                                <p className="text-sm font-bold text-brand-orange">
-                                    +{formatPrice(1000)} additional fee for 3 logos
-                                </p>
-                            </div>
-                        ) : null}
+                        {(() => {
+                            const logoCount = [selectedFrontLogos.length > 0, selectedBackLogos.length > 0, selectedSideLogos.length > 0].filter(Boolean).length;
+                            const extraLogos = Math.max(0, logoCount - 2);
+                            if (extraLogos === 0) return null;
+                            return (
+                                <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-2xl">
+                                    <Info size={18} className="text-brand-orange flex-shrink-0" />
+                                    <p className="text-sm font-bold text-brand-orange">
+                                        +{formatPrice(extraLogos * 1000)} logo fee ({extraLogos} logo{extraLogos > 1 ? "s" : ""} × {formatPrice(1000)})
+                                    </p>
+                                </div>
+                            );
+                        })()}
 
                         {/* Colors */}
                         {product.colors && product.colors.length > 0 && (
