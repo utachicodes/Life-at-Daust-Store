@@ -631,9 +631,12 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                                     <button
                                                         type="button"
                                                         onClick={() => {
-                                                            const updated = { ...formData.logoImages };
-                                                            updated["_default"][color.name] = updated["_default"][color.name].filter((_, i) => i !== idx);
-                                                            setFormData({ ...formData, logoImages: updated });
+                                                            setFormData(prev => {
+                                                                const base = prev.logoImages || {};
+                                                                const defaultMap = { ...(base["_default"] || {}) };
+                                                                defaultMap[color.name] = (defaultMap[color.name] || []).filter((_, i) => i !== idx);
+                                                                return { ...prev, logoImages: { ...base, "_default": defaultMap } };
+                                                            });
                                                         }}
                                                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
                                                     >
@@ -651,9 +654,8 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                                     onChange={async (e) => {
                                                         const files = Array.from(e.target.files || []);
                                                         if (files.length === 0) return;
-                                                        const updated = { ...(formData.logoImages || {}) };
-                                                        if (!updated["_default"]) updated["_default"] = {};
-                                                        if (!updated["_default"][color.name]) updated["_default"][color.name] = [];
+                                                        // Upload all files first, then update state once using prev
+                                                        const newStorageIds = [];
                                                         for (const file of files) {
                                                             const optimized = await optimizeImage(file);
                                                             const postUrl = await generateUploadUrl();
@@ -663,9 +665,14 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                                                 body: optimized,
                                                             });
                                                             const { storageId } = await result.json();
-                                                            updated["_default"][color.name] = [...updated["_default"][color.name], storageId];
+                                                            newStorageIds.push(storageId);
                                                         }
-                                                        setFormData(prev => ({ ...prev, logoImages: { ...updated } }));
+                                                        setFormData(prev => {
+                                                            const base = prev.logoImages || {};
+                                                            const defaultMap = { ...(base["_default"] || {}) };
+                                                            defaultMap[color.name] = [...(defaultMap[color.name] || []), ...newStorageIds];
+                                                            return { ...prev, logoImages: { ...base, "_default": defaultMap } };
+                                                        });
                                                         e.target.value = "";
                                                     }}
                                                 />
