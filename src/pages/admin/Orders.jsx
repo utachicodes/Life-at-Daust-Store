@@ -30,7 +30,8 @@ import { useAdmin } from "../../context/AdminContext";
 const ITEMS_PER_PAGE = 15;
 
 export default function AdminOrders() {
-    const { adminToken } = useAdmin();
+    const { adminToken, adminRole } = useAdmin();
+    const isPartner = adminRole === "partner";
     const orders = useQuery(api.orders.list, adminToken ? { adminToken } : "skip");
     const updateStatus = useMutation(api.orders.updateStatus);
     const bulkUpdateStatusMutation = useMutation(api.orders.bulkUpdateStatus);
@@ -52,7 +53,10 @@ export default function AdminOrders() {
 
     const selectedOrder = orders?.find((o) => o._id === selectedOrderId) ?? null;
 
-    const ALL_STATUSES = ["All", "Pending Verification", "Pending Payment", "Paid", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded"];
+    const PARTNER_STATUSES = ["Paid", "Processing", "Shipped", "Delivered"];
+    const ALL_STATUSES = isPartner
+        ? ["All", ...PARTNER_STATUSES]
+        : ["All", "Pending Verification", "Pending Payment", "Paid", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded"];
 
     const filteredOrders = useMemo(() => {
         if (!orders) return [];
@@ -63,7 +67,8 @@ export default function AdminOrders() {
                 o.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 o.customer.phone.includes(searchTerm);
             const matchesStatus = statusFilter === "All" || o.status === statusFilter;
-            return matchesSearch && matchesStatus;
+            const matchesRole = !isPartner || PARTNER_STATUSES.includes(o.status);
+            return matchesSearch && matchesStatus && matchesRole;
         });
     }, [orders, searchTerm, statusFilter]);
 

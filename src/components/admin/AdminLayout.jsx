@@ -17,7 +17,8 @@ import {
 import logo from "../../assets/logo.png";
 
 export default function AdminLayout() {
-    const { isAdmin, logout, adminToken } = useAdmin();
+    const { isAdmin, logout, adminToken, adminRole } = useAdmin();
+    const isPartner = adminRole === "partner";
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
     const orders = useQuery(api.orders.list, adminToken ? { adminToken } : "skip");
@@ -27,14 +28,15 @@ export default function AdminLayout() {
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
-    const menuItems = [
-        { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-        { icon: Package, label: "Products", path: "/admin/products" },
-        { icon: Tag, label: "Bundles", path: "/admin/product-sets" },
-        { icon: Layers, label: "Collections", path: "/admin/collections" },
-        { icon: ShoppingBag, label: "Orders", path: "/admin/orders" },
-        { icon: Image, label: "Hero", path: "/admin/hero" },
+    const allMenuItems = [
+        { icon: LayoutDashboard, label: "Dashboard", path: "/admin", managerOnly: true },
+        { icon: Package, label: "Products", path: "/admin/products", managerOnly: true },
+        { icon: Tag, label: "Bundles", path: "/admin/product-sets", managerOnly: true },
+        { icon: Layers, label: "Collections", path: "/admin/collections", managerOnly: true },
+        { icon: ShoppingBag, label: "Orders", path: "/admin/orders", managerOnly: false },
+        { icon: Image, label: "Hero", path: "/admin/hero", managerOnly: true },
     ];
+    const menuItems = isPartner ? allMenuItems.filter(i => !i.managerOnly) : allMenuItems;
 
     return (
         <div className="flex h-screen bg-white overflow-hidden">
@@ -62,7 +64,7 @@ export default function AdminLayout() {
                         />
                         {isSidebarOpen && (
                             <div className="flex flex-col whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
-                                <span className="font-[900] text-[11px] tracking-[0.2em] uppercase leading-none mb-1">Store Admin</span>
+                                <span className="font-[900] text-[11px] tracking-[0.2em] uppercase leading-none mb-1">{isPartner ? "Partner Portal" : "Store Admin"}</span>
                                 <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Life at DAUST</span>
                             </div>
                         )}
@@ -167,8 +169,8 @@ export default function AdminLayout() {
 
                     <div className="flex items-center gap-3 lg:gap-6">
                         <div className="flex flex-col items-end mr-1 lg:mr-2 hidden sm:flex">
-                            <span className="text-xs font-black text-brand-navy uppercase tracking-widest leading-none mb-1">System Admin</span>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Authorized Session</span>
+                            <span className="text-xs font-black text-brand-navy uppercase tracking-widest leading-none mb-1">{isPartner ? "Uniwear Partner" : "System Admin"}</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{isPartner ? "Partner Access" : "Authorized Session"}</span>
                         </div>
                         <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-brand-navy shadow-lg shadow-brand-navy/20 flex items-center justify-center group cursor-pointer hover:bg-brand-orange transition-all duration-500 overflow-hidden relative">
                             <span className="text-white font-[900] text-base lg:text-lg relative z-10 transition-transform group-hover:scale-110">A</span>

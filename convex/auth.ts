@@ -54,10 +54,16 @@ export const login = mutation({
             throw new Error(`Too many login attempts. Please try again in ${rateLimitCheck.waitTime} seconds.`);
         }
 
-        // Get password from server environment (NOT exposed to client)
+        // Get passwords from server environment (NOT exposed to client)
         const adminPassword = process.env.ADMIN_PASSWORD || "daust";
+        const partnerPassword = process.env.PARTNER_PASSWORD || "uniwear";
 
-        if (args.password !== adminPassword) {
+        let role: "manager" | "partner";
+        if (args.password === adminPassword) {
+            role = "manager";
+        } else if (args.password === partnerPassword) {
+            role = "partner";
+        } else {
             throw new Error("Invalid password");
         }
 
@@ -71,6 +77,7 @@ export const login = mutation({
             token,
             expiresAt,
             createdAt: now,
+            role,
         });
 
         // Clean up old sessions (optional, for housekeeping)
@@ -86,6 +93,7 @@ export const login = mutation({
         return {
             token,
             expiresAt,
+            role,
         };
     },
 });
@@ -111,7 +119,7 @@ export const verifyToken = query({
             return { valid: false, reason: "Session expired" };
         }
 
-        return { valid: true, expiresAt: session.expiresAt };
+        return { valid: true, expiresAt: session.expiresAt, role: session.role ?? "manager" };
     },
 });
 

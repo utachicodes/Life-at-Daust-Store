@@ -15,6 +15,10 @@ export function AdminProvider({ children }) {
         return expiry ? parseInt(expiry, 10) : null;
     });
 
+    const [adminRole, setAdminRole] = useState(() => {
+        return sessionStorage.getItem("admin_role") || null;
+    });
+
     const loginMutation = useMutation(api.auth.login);
     const logoutMutation = useMutation(api.auth.logout);
     const refreshMutation = useMutation(api.auth.refreshSession);
@@ -26,6 +30,7 @@ export function AdminProvider({ children }) {
     );
 
     const isAdmin = tokenVerification?.valid || false;
+    const verifiedRole = tokenVerification?.role ?? adminRole;
 
     // Auto-logout on session expiry
     useEffect(() => {
@@ -72,10 +77,12 @@ export function AdminProvider({ children }) {
             if (result && result.token) {
                 setAdminToken(result.token);
                 setSessionExpiry(result.expiresAt);
+                setAdminRole(result.role);
 
                 // Persist to sessionStorage
                 sessionStorage.setItem("admin_token", result.token);
                 sessionStorage.setItem("admin_expiry", result.expiresAt.toString());
+                sessionStorage.setItem("admin_role", result.role);
 
                 return { success: true };
             }
@@ -98,8 +105,10 @@ export function AdminProvider({ children }) {
 
         setAdminToken(null);
         setSessionExpiry(null);
+        setAdminRole(null);
         sessionStorage.removeItem("admin_token");
         sessionStorage.removeItem("admin_expiry");
+        sessionStorage.removeItem("admin_role");
     };
 
     const refreshSession = async () => {
@@ -119,7 +128,7 @@ export function AdminProvider({ children }) {
     };
 
     return (
-        <AdminContext.Provider value={{ isAdmin, adminToken, login, logout, sessionExpiry }}>
+        <AdminContext.Provider value={{ isAdmin, adminToken, adminRole: verifiedRole, login, logout, sessionExpiry }}>
             {children}
         </AdminContext.Provider>
     );

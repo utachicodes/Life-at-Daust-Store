@@ -96,6 +96,7 @@ export default defineSchema({
         token: v.string(),
         expiresAt: v.number(),
         createdAt: v.number(),
+        role: v.optional(v.union(v.literal("manager"), v.literal("partner"))),
     }).index("by_token", ["token"]),
     siteSettings: defineTable({
         heroMedia: v.optional(v.array(v.object({

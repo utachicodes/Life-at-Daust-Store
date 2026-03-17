@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -23,7 +23,7 @@ import OrderSuccess from "./pages/OrderSuccess.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
 // Admin Imports
-import { AdminProvider } from "./context/AdminContext";
+import { AdminProvider, useAdmin } from "./context/AdminContext";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -32,6 +32,12 @@ import AdminProductSets from "./pages/admin/ProductSets";
 import AdminCollections from "./pages/admin/Collections";
 import AdminOrders from "./pages/admin/Orders";
 import AdminHeroSettings from "./pages/admin/HeroSettings";
+
+function ManagerOnlyRoute({ children }) {
+  const { adminRole } = useAdmin();
+  if (adminRole === "partner") return <Navigate to="/admin/orders" replace />;
+  return children;
+}
 
 export default function App() {
   useEffect(() => {
@@ -59,12 +65,12 @@ export default function App() {
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="product-sets" element={<AdminProductSets />} />
-            <Route path="collections" element={<AdminCollections />} />
+            <Route index element={<ManagerOnlyRoute><AdminDashboard /></ManagerOnlyRoute>} />
+            <Route path="products" element={<ManagerOnlyRoute><AdminProducts /></ManagerOnlyRoute>} />
+            <Route path="product-sets" element={<ManagerOnlyRoute><AdminProductSets /></ManagerOnlyRoute>} />
+            <Route path="collections" element={<ManagerOnlyRoute><AdminCollections /></ManagerOnlyRoute>} />
             <Route path="orders" element={<AdminOrders />} />
-            <Route path="hero" element={<AdminHeroSettings />} />
+            <Route path="hero" element={<ManagerOnlyRoute><AdminHeroSettings /></ManagerOnlyRoute>} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
