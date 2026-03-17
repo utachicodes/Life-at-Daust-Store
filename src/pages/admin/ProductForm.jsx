@@ -19,13 +19,13 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
         colors: [],
         sizes: [],
         logos: [],
-        logoImages: null,
         collection: "",
         stock: "",
         shippingTimeline: "",
         hoodieTypes: [],
         buyingPrice: "",
     });
+    const [colorImages, setColorImages] = useState(null);
 
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState("");
@@ -62,13 +62,13 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                 colors: product.colors || [],
                 sizes: product.sizes || [],
                 logos: product.logos || [],
-                logoImages: product.logoImages || null,
                 collection: product.collection || "",
                 stock: product.stock?.toString() || "",
                 shippingTimeline: product.shippingTimeline || "",
                 hoodieTypes: product.hoodieTypes || [],
                 buyingPrice: product.buyingPrice?.toString() || "",
             });
+            setColorImages(product.logoImages || null);
             setImagePreview(product.image || "");
         }
     }, [product]);
@@ -231,7 +231,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                 colors: formData.colors,
                 sizes: formData.sizes,
                 logos: formData.logos,
-                logoImages: sanitizeLogoImages(formData.logoImages),
+                logoImages: sanitizeLogoImages(colorImages),
                 collection: formData.collection || undefined,
                 stock: formData.stock !== "" ? parseInt(formData.stock) : undefined,
                 shippingTimeline: formData.shippingTimeline || undefined,
@@ -618,7 +618,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                         <p className="text-[10px] text-gray-400 font-bold mb-4">Upload images for each color. These show when a customer selects that color.</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {formData.colors.map((color) => {
-                                const images = formData.logoImages?.["_default"]?.[color.name] || [];
+                                const images = colorImages?.["_default"]?.[color.name] || [];
                                 return (
                                     <div key={color.name} className="bg-white rounded-xl p-3 border border-gray-100">
                                         <div className="flex items-center gap-2 mb-2">
@@ -633,11 +633,11 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                                     <button
                                                         type="button"
                                                         onClick={() => {
-                                                            setFormData(prev => {
-                                                                const base = prev.logoImages || {};
+                                                            setColorImages(prev => {
+                                                                const base = prev || {};
                                                                 const defaultMap = { ...(base["_default"] || {}) };
                                                                 defaultMap[color.name] = (defaultMap[color.name] || []).filter((_, i) => i !== idx);
-                                                                return { ...prev, logoImages: { ...base, "_default": defaultMap } };
+                                                                return { ...base, "_default": defaultMap };
                                                             });
                                                         }}
                                                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
@@ -656,7 +656,6 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                                     onChange={async (e) => {
                                                         const files = Array.from(e.target.files || []);
                                                         if (files.length === 0) return;
-                                                        // Upload all files first, then update state once using prev
                                                         const newStorageIds = [];
                                                         for (const file of files) {
                                                             const optimized = await optimizeImage(file);
@@ -669,11 +668,11 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                                             const { storageId } = await result.json();
                                                             newStorageIds.push(storageId);
                                                         }
-                                                        setFormData(prev => {
-                                                            const base = prev.logoImages || {};
+                                                        setColorImages(prev => {
+                                                            const base = prev || {};
                                                             const defaultMap = { ...(base["_default"] || {}) };
                                                             defaultMap[color.name] = [...(defaultMap[color.name] || []), ...newStorageIds];
-                                                            return { ...prev, logoImages: { ...base, "_default": defaultMap } };
+                                                            return { ...base, "_default": defaultMap };
                                                         });
                                                         e.target.value = "";
                                                     }}
