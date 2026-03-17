@@ -189,7 +189,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
 
     const defaultSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
-    // Only keep raw storage IDs (start with "kg") — never store resolved URLs in DB
+    // Keep storage IDs ("kg...") and Convex storage URLs ("https://")
     const sanitizeLogoImages = (logoImages) => {
         if (!logoImages || typeof logoImages !== "object") return logoImages;
         const out = {};
@@ -198,7 +198,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
             if (colorMap && typeof colorMap === "object") {
                 for (const [colorName, images] of Object.entries(colorMap)) {
                     if (Array.isArray(images)) {
-                        out[logoKey][colorName] = images.filter(img => typeof img === "string" && img.startsWith("kg"));
+                        out[logoKey][colorName] = images.filter(img => typeof img === "string" && img.length > 0);
                     }
                 }
             }

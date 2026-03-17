@@ -83,6 +83,7 @@ export const getById = query({
             image: imageUrl,
             logos,
             logoImages,
+            logoImagesRaw: product.logoImages ?? null,
         };
     },
 });
