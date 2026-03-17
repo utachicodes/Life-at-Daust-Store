@@ -167,13 +167,16 @@ export function CartProvider({ children }) {
     [items]
   );
 
-  const LOGO_FEE = 1000;
+  const LOGO_FEE = 500;
 
   const logoFees = useMemo(() =>
     items.reduce((sum, p) => {
       if (!p.isProductSet) {
-        const logoCount = [p.selectedFrontLogo, p.selectedBackLogo, p.selectedSideLogo].filter(Boolean).length;
-        const extraLogos = Math.max(0, logoCount - 2);
+        const freeLogos = ["DAUSTIAN+ENGINEERS"];
+        const countBillable = (str) =>
+          str ? str.split(", ").filter(name => !freeLogos.includes(name)).length : 0;
+        const totalLogos = countBillable(p.selectedFrontLogo) + countBillable(p.selectedBackLogo) + countBillable(p.selectedSideLogo);
+        const extraLogos = Math.max(0, totalLogos - 2);
         return sum + extraLogos * LOGO_FEE * p.qty;
       }
       return sum;

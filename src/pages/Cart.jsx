@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Package, Tag } from "lucide-react";
+import { Trash2, ShoppingBag, ArrowRight, Package, Tag, ChevronUp } from "lucide-react";
 import { formatPrice } from "../utils/format.js";
 import Button from "../components/ui/Button";
 
 export default function Cart() {
   const { items, removeItem, setQty, count, subtotal, totalSavings, logoFees, total } = useCart();
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   // Separate product sets from regular items
   const productSetItems = items.filter(item => item.isProductSet);
@@ -41,7 +42,7 @@ export default function Cart() {
         </Link>
       </div>
 
-      <div className="grid gap-12 lg:grid-cols-12 pb-[450px] lg:pb-0">
+      <div className={`grid gap-12 lg:grid-cols-12 lg:pb-0 transition-all duration-300 ${summaryOpen ? "pb-[440px]" : "pb-24"}`}>
         {/* Cart Items */}
         <div className="lg:col-span-8 space-y-6">
           {/* Product Sets Section */}
@@ -235,54 +236,87 @@ export default function Cart() {
 
         {/* Order Summary */}
         <div className="lg:col-span-4">
-          <div className="bg-brand-navy rounded-t-[2rem] lg:rounded-[2rem] p-6 sm:p-8 lg:p-10 fixed lg:sticky bottom-0 left-0 right-0 lg:top-24 text-white shadow-2xl shadow-brand-navy/30 z-50 max-h-[85vh] lg:max-h-none overflow-y-auto">
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-6 sm:mb-8">Summary</h2>
+          <div className="bg-brand-navy rounded-t-[2rem] lg:rounded-[2rem] fixed lg:sticky bottom-0 left-0 right-0 lg:top-24 text-white shadow-2xl shadow-brand-navy/30 z-50 lg:max-h-none">
 
-            <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-              <div className="flex justify-between items-center">
-                <span className="text-brand-cream/60 font-medium text-sm sm:text-base">Subtotal</span>
-                <span className="font-bold text-sm sm:text-base">{formatPrice(subtotal)}</span>
-              </div>
-              {totalSavings > 0 && (
-                <div className="flex justify-between items-center">
-                  <span className="text-green-400 font-medium text-sm sm:text-base">Bundle Savings</span>
-                  <span className="font-bold text-green-400 text-sm sm:text-base">-{formatPrice(totalSavings)}</span>
+            {/* Mobile toggle bar */}
+            <div className="lg:hidden flex items-center justify-between px-5 py-4">
+              <button
+                onClick={() => setSummaryOpen(s => !s)}
+                className="flex items-center gap-2 flex-1"
+                aria-expanded={summaryOpen}
+                aria-label={summaryOpen ? "Collapse order summary" : "Expand order summary"}
+              >
+                <ChevronUp
+                  size={20}
+                  className={`text-brand-orange transition-transform duration-300 ${summaryOpen ? "" : "rotate-180"}`}
+                />
+                <span className="font-black text-sm">Order Summary</span>
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-brand-orange">Total</p>
+                  <p className="text-lg font-black">{formatPrice(total)}</p>
                 </div>
-              )}
-              {logoFees > 0 && (
-                <div className="flex justify-between items-center">
-                  <span className="text-brand-cream/60 font-medium text-sm sm:text-base">Additional Logo Fees</span>
-                  <span className="font-bold text-sm sm:text-base">{formatPrice(logoFees)}</span>
-                </div>
-              )}
-              <div className="flex justify-between items-center">
-                <span className="text-brand-cream/60 font-medium text-sm sm:text-base">Est. Shipping</span>
-                <span className="font-bold text-brand-orange uppercase text-xs tracking-widest">Complimentary</span>
+                {!summaryOpen && (
+                  <Link to="/checkout" onClick={e => e.stopPropagation()}>
+                    <span className="bg-white text-brand-navy text-xs font-black px-4 py-2.5 rounded-xl flex items-center gap-1.5 active:scale-95 transition-transform">
+                      Checkout <ArrowRight size={14} />
+                    </span>
+                  </Link>
+                )}
               </div>
             </div>
 
-            <div className="h-[1px] bg-white/10 my-6 sm:my-8" />
+            {/* Collapsible body */}
+            <div className={`${summaryOpen ? "block" : "hidden"} lg:block p-6 sm:p-8 lg:p-10 pt-0 lg:pt-10 overflow-y-auto max-h-[calc(85vh-64px)] lg:max-h-none`}>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight mb-6 sm:mb-8 hidden lg:block">Summary</h2>
 
-            <div className="flex justify-between items-end mb-6 sm:mb-10">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange">Estimated Total</p>
-                <p className="text-3xl sm:text-4xl font-black tracking-tighter">{formatPrice(total)}</p>
+              <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                <div className="flex justify-between items-center">
+                  <span className="text-white/60 font-medium text-sm sm:text-base">Subtotal</span>
+                  <span className="font-bold text-sm sm:text-base">{formatPrice(subtotal)}</span>
+                </div>
+                {totalSavings > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-400 font-medium text-sm sm:text-base">Bundle Savings</span>
+                    <span className="font-bold text-green-400 text-sm sm:text-base">-{formatPrice(totalSavings)}</span>
+                  </div>
+                )}
+                {logoFees > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/60 font-medium text-sm sm:text-base">Additional Logo Fees</span>
+                    <span className="font-bold text-sm sm:text-base">{formatPrice(logoFees)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-white/60 font-medium text-sm sm:text-base">Est. Shipping</span>
+                  <span className="font-bold text-brand-orange uppercase text-xs tracking-widest">Complimentary</span>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-3 sm:space-y-4">
-              <Link to="/checkout" className="block">
-                <Button variant="primary" size="lg" className="w-full !bg-white !text-brand-navy hover:!bg-brand-orange hover:!text-white active:scale-[0.98] rounded-2xl h-14 sm:h-16 shadow-xl shadow-black/20 group">
-                  <span className="text-base font-bold">Secure Checkout</span>
-                  <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
+              <div className="h-[1px] bg-white/10 my-6 sm:my-8" />
 
-              <Link to="/shop" className="block lg:block hidden">
-                <Button variant="ghost" className="w-full text-brand-cream/60 hover:text-white hover:bg-white/5 h-12 sm:h-14">
-                  Add more items
-                </Button>
-              </Link>
+              <div className="flex justify-between items-end mb-6 sm:mb-10">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange">Estimated Total</p>
+                  <p className="text-3xl sm:text-4xl font-black tracking-tighter">{formatPrice(total)}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <Link to="/checkout" className="block">
+                  <Button variant="primary" size="lg" className="w-full !bg-white !text-brand-navy hover:!bg-brand-orange hover:!text-white active:scale-[0.98] rounded-2xl h-14 sm:h-16 shadow-xl shadow-black/20 group">
+                    <span className="text-base font-bold">Secure Checkout</span>
+                    <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+
+                <Link to="/shop" className="hidden lg:block">
+                  <Button variant="ghost" className="w-full text-white/60 hover:text-white hover:bg-white/5 h-12 sm:h-14">
+                    Add more items
+                  </Button>
+                </Link>
+              </div>
             </div>
 
           </div>

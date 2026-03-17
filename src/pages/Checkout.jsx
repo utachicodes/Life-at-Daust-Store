@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
-import { Shield, ChevronLeft, Lock, Info, AlertCircle, Package, Tag } from "lucide-react";
+import { Shield, ChevronLeft, Lock, Info, AlertCircle, Package, Tag, ChevronUp } from "lucide-react";
 import { formatPrice } from "../utils/format.js";
 import Button from "../components/ui/Button";
 
@@ -25,6 +25,7 @@ export default function Checkout() {
   const { items, subtotal, clear, totalSavings, logoFees } = useCart();
   const [orderId] = useState(makeOrderId());
   const [loading, setLoading] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", location: "" });
   const [error, setError] = useState("");
   const nav = useNavigate();
@@ -189,7 +190,7 @@ export default function Checkout() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 grid gap-12 sm:gap-16 lg:grid-cols-12 items-start pb-[550px] lg:pb-0">
+      <main className={`max-w-7xl mx-auto px-4 grid gap-12 sm:gap-16 lg:grid-cols-12 items-start lg:pb-0 transition-all duration-300 ${summaryOpen ? "pb-[550px]" : "pb-28"}`}>
         <div className="lg:col-span-7 animate-in slide-in-from-left-5 duration-700">
           <h1 className="text-3xl sm:text-[var(--text-4xl)] font-black text-brand-navy tracking-tighter mb-3 sm:mb-4">Complete Your Order</h1>
           <p className="text-gray-500 mb-8 sm:mb-12 text-base sm:text-lg">Enter your details to finalize your university essentials.</p>
@@ -323,12 +324,33 @@ export default function Checkout() {
           </form>
         </div>
 
-        <aside className="lg:col-span-5 h-fit animate-in slide-in-from-right-5 duration-700 delay-100 fixed lg:relative bottom-0 left-0 right-0 lg:bottom-auto z-50 max-h-[500px] lg:max-h-none overflow-y-auto">
-          <div className="bg-brand-navy rounded-t-3xl lg:rounded-[2.5rem] p-6 sm:p-8 lg:p-10 text-white shadow-2xl shadow-brand-navy/40 relative overflow-hidden">
+        <aside className="lg:col-span-5 h-fit animate-in slide-in-from-right-5 duration-700 delay-100 fixed lg:relative bottom-0 left-0 right-0 lg:bottom-auto z-50">
+          <div className="bg-brand-navy rounded-t-3xl lg:rounded-[2.5rem] text-white shadow-2xl shadow-brand-navy/40 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" />
 
-            <div className="relative z-10">
-              <h2 className="text-lg sm:text-xl font-black tracking-tight mb-6 sm:mb-8">Review Selection</h2>
+            {/* Mobile toggle bar */}
+            <div className="lg:hidden flex items-center justify-between px-5 py-4 relative z-10">
+              <button
+                onClick={() => setSummaryOpen(s => !s)}
+                className="flex items-center gap-2 flex-1"
+                aria-expanded={summaryOpen}
+                aria-label={summaryOpen ? "Collapse order summary" : "Expand order summary"}
+              >
+                <ChevronUp
+                  size={20}
+                  className={`text-brand-orange transition-transform duration-300 ${summaryOpen ? "" : "rotate-180"}`}
+                />
+                <span className="font-black text-sm">Order Summary</span>
+              </button>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-orange">Total</p>
+                <p className="text-lg font-black">{fmt(total)}</p>
+              </div>
+            </div>
+
+            {/* Collapsible body */}
+            <div className={`${summaryOpen ? "block" : "hidden"} lg:block p-6 sm:p-8 lg:p-10 pt-0 lg:pt-10 overflow-y-auto max-h-[calc(85vh-64px)] lg:max-h-none relative z-10`}>
+              <h2 className="text-lg sm:text-xl font-black tracking-tight mb-6 sm:mb-8 hidden lg:block">Review Selection</h2>
 
               {/* Product Sets Section */}
               {productSetItems.length > 0 && (

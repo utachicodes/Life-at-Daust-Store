@@ -115,9 +115,9 @@ export default function ProductDetails() {
                 </nav>
             </div>
 
-            <main className="max-w-7xl mx-auto px-4 py-12 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+            <main className="max-w-7xl mx-auto px-4 py-3 sm:py-24 grid grid-cols-[5fr_7fr] lg:grid-cols-12 gap-3 sm:gap-8 lg:gap-20">
 {/* Left: Image Gallery (Span 7) */}
-                <div id="product-image" className="lg:col-span-5 space-y-4 sm:space-y-6">
+                <div id="product-image" className="lg:col-span-5 space-y-2 sm:space-y-6">
                     <div className="relative aspect-[3/4] sm:aspect-[4/5] rounded-2xl sm:rounded-[2rem] overflow-hidden bg-gray-50/50 premium-shadow border border-gray-100 animate-in fade-in zoom-in-95 duration-700">
                         <img
                             src={mainImage || product.image}
@@ -137,7 +137,7 @@ export default function ProductDetails() {
                             </div>
                         )}
                     </div>
-                    <div className="flex gap-3 sm:gap-4 overflow-x-auto py-2 sm:py-4 scrollbar-hide px-1 sm:px-2 snap-x snap-mandatory">
+                    <div className="hidden sm:flex gap-3 sm:gap-4 overflow-x-auto py-2 sm:py-4 scrollbar-hide px-1 sm:px-2 snap-x snap-mandatory">
                         {gallery.map((img, idx) => (
                             <button
                                 key={idx}
@@ -155,41 +155,41 @@ export default function ProductDetails() {
                 </div>
 
                 {/* Right: Info & Actions (Span 5) */}
-                <div className="lg:col-span-7 flex flex-col pt-4">
-                    <div className="mb-10 animate-in slide-in-from-right-10 duration-700 delay-100">
+                <div className="lg:col-span-7 flex flex-col overflow-y-auto max-h-[calc(100svh-120px)] sm:max-h-none sm:pt-4">
+                    <div className="mb-3 sm:mb-10 animate-in slide-in-from-right-10 duration-700 delay-100">
                         {product.badge && (
-                            <span className="inline-block px-4 py-1.5 rounded-full bg-orange-100 text-brand-orange text-[10px] font-black uppercase tracking-[0.2em] mb-6 shadow-sm">
+                            <span className="inline-block px-2 py-1 sm:px-4 sm:py-1.5 rounded-full bg-orange-100 text-brand-orange text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] mb-2 sm:mb-6 shadow-sm">
                                 {product.badge}
                             </span>
                         )}
-                        <h1 className="text-[var(--text-4xl)] font-black text-brand-navy leading-tight tracking-tighter mb-2">
+                        <h1 className="text-base sm:text-[var(--text-4xl)] font-black text-brand-navy leading-tight tracking-tighter mb-1 sm:mb-2">
                             {product.name}
                         </h1>
-                        <div className="flex items-center gap-6">
-                            <span className="text-3xl font-black text-brand-orange tracking-tight">
+                        <div className="flex items-center gap-2 sm:gap-6 flex-wrap">
+                            <span className="text-lg sm:text-3xl font-black text-brand-orange tracking-tight">
                                 {formatPrice(product.price)}
                             </span>
-                            <div className="h-6 w-[1px] bg-gray-200" />
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-lg">
-                                <Star size={16} fill="#fbbf24" className="text-yellow-400" />
-                                <span className="text-sm font-black text-gray-800">{product.rating}</span>
+                            <div className="hidden sm:block h-6 w-[1px] bg-gray-200" />
+                            <div className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-yellow-50 rounded-lg">
+                                <Star size={12} fill="#fbbf24" className="text-yellow-400 sm:w-4 sm:h-4" />
+                                <span className="text-xs sm:text-sm font-black text-gray-800">{product.rating}</span>
                             </div>
                         </div>
                     </div>
 
                     {product.description && (
-                        <p className="text-gray-500 text-lg leading-relaxed mb-10 font-medium">
+                        <p className="hidden sm:block text-gray-500 text-lg leading-relaxed mb-10 font-medium">
                             {product.description}
                         </p>
                     )}
 
                     {/* Variants Section */}
-                    <div className="space-y-10 mb-12 animate-in slide-in-from-right-10 duration-700 delay-200">
+                    <div className="space-y-4 sm:space-y-10 mb-4 sm:mb-12 animate-in slide-in-from-right-10 duration-700 delay-200">
                         {/* Hoodie Type */}
                         {product.hoodieTypes && product.hoodieTypes.length > 0 && (
-                            <div className="space-y-5">
+                            <div className="space-y-2 sm:space-y-5">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
                                         Hoodie Type · <span className="text-brand-navy">{selectedHoodieType || "Select"}</span>
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
@@ -198,7 +198,7 @@ export default function ProductDetails() {
                                                 key={t}
                                                 type="button"
                                                 onClick={() => setSelectedHoodieType(t)}
-                                                className={`flex items-center gap-2 px-5 py-3 sm:px-4 sm:py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${selectedHoodieType === t
+                                                className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${selectedHoodieType === t
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                     : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                                     }`}
@@ -213,16 +213,16 @@ export default function ProductDetails() {
 
                         {/* Front Logo Selection */}
                         {product.logos && product.logos.filter(l => !l.positions || l.positions.includes("front")).length > 0 && (
-                            <div className="space-y-5">
+                            <div className="space-y-2 sm:space-y-5">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
-                                        Front Logo · <span className="text-brand-navy">{selectedFrontLogos.length > 0 ? selectedFrontLogos.map(l => l.name).join(", ") : "None"}</span>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
+                                        Front Logo <span className="normal-case font-medium">(choose one)</span> · <span className="text-brand-navy">{selectedFrontLogos.length > 0 ? selectedFrontLogos[0].name : "None"}</span>
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
                                         <button
                                             type="button"
                                             onClick={() => setSelectedFrontLogos([])}
-                                            className={`px-5 py-3 sm:px-4 sm:py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                            className={`px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
                                                 selectedFrontLogos.length === 0
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                     : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
@@ -237,9 +237,7 @@ export default function ProductDetails() {
                                                     key={logo.id || logo.name}
                                                     type="button"
                                                     onClick={() => {
-                                                        setSelectedFrontLogos(prev =>
-                                                            isSelected ? prev.filter(l => !((l.id && l.id === logo.id) || l.name === logo.name)) : [...prev, logo]
-                                                        );
+                                                        setSelectedFrontLogos(isSelected ? [] : [logo]);
                                                         if (!isSelected && window.innerWidth < 1024) {
                                                             document.getElementById('product-image')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                         }
@@ -248,13 +246,13 @@ export default function ProductDetails() {
                                                             setTimeout(() => setLogoPreview(null), 2500);
                                                         }
                                                     }}
-                                                    className={`flex items-center gap-2 px-5 py-3 sm:px-4 sm:py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                    className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
                                                         isSelected
                                                             ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                             : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                                     }`}
                                                 >
-                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-8 h-8 sm:w-7 sm:h-7 rounded-lg object-cover" />}
+                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-5 h-5 sm:w-7 sm:h-7 rounded-md object-cover" />}
                                                     {logo.name}
                                                 </button>
                                             );
@@ -266,16 +264,16 @@ export default function ProductDetails() {
 
                         {/* Back Logo Selection */}
                         {product.logos && product.logos.filter(l => !l.positions || l.positions.includes("back")).length > 0 && (
-                            <div className="space-y-5">
+                            <div className="space-y-2 sm:space-y-5">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
                                         Back Logo · <span className="text-brand-navy">{selectedBackLogos.length > 0 ? selectedBackLogos.map(l => l.name).join(", ") : "None"}</span>
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
                                         <button
                                             type="button"
                                             onClick={() => setSelectedBackLogos([])}
-                                            className={`px-5 py-3 sm:px-4 sm:py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                            className={`px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
                                                 selectedBackLogos.length === 0
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                     : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
@@ -301,13 +299,13 @@ export default function ProductDetails() {
                                                             setTimeout(() => setLogoPreview(null), 2500);
                                                         }
                                                     }}
-                                                    className={`flex items-center gap-2 px-5 py-3 sm:px-4 sm:py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                    className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
                                                         isSelected
                                                             ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                             : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                                     }`}
                                                 >
-                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-8 h-8 sm:w-7 sm:h-7 rounded-lg object-cover" />}
+                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-5 h-5 sm:w-7 sm:h-7 rounded-md object-cover" />}
                                                     {logo.name}
                                                 </button>
                                             );
@@ -319,16 +317,16 @@ export default function ProductDetails() {
 
                         {/* Side Logo Selection */}
                         {product.logos && product.logos.filter(l => !l.positions || l.positions.includes("side")).length > 0 && (
-                            <div className="space-y-5">
+                            <div className="space-y-2 sm:space-y-5">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
                                         Side Logo · <span className="text-brand-navy">{selectedSideLogos.length > 0 ? selectedSideLogos.map(l => l.name).join(", ") : "None"}</span>
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
                                         <button
                                             type="button"
                                             onClick={() => setSelectedSideLogos([])}
-                                            className={`px-5 py-3 sm:px-4 sm:py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                            className={`px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
                                                 selectedSideLogos.length === 0
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                     : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
@@ -354,13 +352,13 @@ export default function ProductDetails() {
                                                             setTimeout(() => setLogoPreview(null), 2500);
                                                         }
                                                     }}
-                                                    className={`flex items-center gap-2 px-5 py-3 sm:px-4 sm:py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                    className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
                                                         isSelected
                                                             ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                             : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                                     }`}
                                                 >
-                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-8 h-8 sm:w-7 sm:h-7 rounded-lg object-cover" />}
+                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-5 h-5 sm:w-7 sm:h-7 rounded-md object-cover" />}
                                                     {logo.name}
                                                 </button>
                                             );
@@ -372,14 +370,16 @@ export default function ProductDetails() {
 
                         {/* Additional Logo Fee Notice */}
                         {(() => {
-                            const logoCount = [selectedFrontLogos.length > 0, selectedBackLogos.length > 0, selectedSideLogos.length > 0].filter(Boolean).length;
-                            const extraLogos = Math.max(0, logoCount - 2);
+                            const freeLogos = ["DAUSTIAN+ENGINEERS"];
+                            const billable = (arr) => arr.filter(l => !freeLogos.includes(l.name)).length;
+                            const totalLogoCount = billable(selectedFrontLogos) + billable(selectedBackLogos) + billable(selectedSideLogos);
+                            const extraLogos = Math.max(0, totalLogoCount - 2);
                             if (extraLogos === 0) return null;
                             return (
                                 <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-2xl">
                                     <Info size={18} className="text-brand-orange flex-shrink-0" />
                                     <p className="text-sm font-bold text-brand-orange">
-                                        +{formatPrice(extraLogos * 1000)} logo fee ({extraLogos} logo{extraLogos > 1 ? "s" : ""} × {formatPrice(1000)})
+                                        +{formatPrice(extraLogos * 500)} logo fee ({extraLogos} extra logo{extraLogos > 1 ? "s" : ""} × {formatPrice(500)})
                                     </p>
                                 </div>
                             );
@@ -388,33 +388,37 @@ export default function ProductDetails() {
                         {/* Colors */}
                         {product.colors && product.colors.length > 0 && (
                             <div>
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
                                     Select Color · <span className="text-brand-navy">{selectedColor?.name}</span>
                                 </h3>
-                                <div className="flex gap-4 sm:gap-4">
-                                    {product.colors.map((color) => (
-                                        <button
-                                            key={color.name}
-                                            onClick={() => setSelectedColor(color)}
-                                            className={`relative w-14 h-14 sm:w-12 sm:h-12 rounded-full ring-2 ring-offset-4 transition-all duration-300 active:scale-95 ${selectedColor?.name === color.name
-                                                ? "ring-brand-orange"
-                                                : "ring-transparent"
-                                                }`}
-                                            aria-label={`Select ${color.name} color`}
-                                        >
-                                            <span
-                                                className="block w-full h-full rounded-full shadow-inner border border-black/5"
-                                                style={{ backgroundColor: color.hex }}
-                                            />
-                                            {selectedColor?.name === color.name && (
-                                                <span className="absolute inset-0 flex items-center justify-center">
-                                                    <svg className="w-6 h-6 sm:w-5 sm:h-5 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                </span>
-                                            )}
-                                        </button>
-                                    ))}
+                                <div className="flex items-center gap-5 flex-wrap">
+                                    {/* Color swatches */}
+                                    <div className="flex gap-3">
+                                        {product.colors.map((color) => (
+                                            <button
+                                                key={color.name}
+                                                onClick={() => setSelectedColor(color)}
+                                                className={`relative w-8 h-8 rounded-full ring-2 ring-offset-2 transition-all duration-300 active:scale-95 ${selectedColor?.name === color.name
+                                                    ? "ring-brand-orange"
+                                                    : "ring-transparent"
+                                                    }`}
+                                                aria-label={`Select ${color.name} color`}
+                                            >
+                                                <span
+                                                    className="block w-full h-full rounded-full shadow-inner border border-black/5"
+                                                    style={{ backgroundColor: color.hex }}
+                                                />
+                                                {selectedColor?.name === color.name && (
+                                                    <span className="absolute inset-0 flex items-center justify-center">
+                                                        <svg className="w-4 h-4 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+
                                 </div>
                             </div>
                         )}
@@ -422,7 +426,7 @@ export default function ProductDetails() {
                         {/* Sizes */}
                         {product.sizes && product.sizes.length > 0 && (
                             <div>
-                                <div className="flex justify-between items-center mb-5">
+                                <div className="flex justify-between items-center mb-2 sm:mb-5">
                                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Select Your Size</h3>
                                     <button className="text-[10px] text-brand-orange font-black uppercase tracking-widest hover:underline">Size Guide</button>
                                 </div>
@@ -431,7 +435,7 @@ export default function ProductDetails() {
                                         <button
                                             key={size}
                                             onClick={() => setSelectedSize(size)}
-                                            className={`min-w-[80px] sm:min-w-[70px] h-12 sm:h-14 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${selectedSize === size
+                                            className={`min-w-[52px] sm:min-w-[70px] h-9 sm:h-14 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${selectedSize === size
                                                 ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                 : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                                 }`}
@@ -445,10 +449,10 @@ export default function ProductDetails() {
                     </div>
 
                     {/* Add to Cart Actions */}
-                    <div className="mt-auto pt-10 border-t border-gray-100 animate-in slide-in-from-bottom-5 duration-700 delay-300">
+                    <div className="mt-auto pt-3 sm:pt-10 border-t border-gray-100 animate-in slide-in-from-bottom-5 duration-700 delay-300">
                         <div className="flex flex-wrap gap-4 items-center">
                             {/* Stock Status */}
-                            <div className="w-full mb-4">
+                            <div className="w-full mb-1 sm:mb-4">
                                 <div className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${product.stock === 0 ? "bg-red-500" : product.stock <= 5 ? "bg-orange-500" : "bg-green-500"}`} />
                                     <span className={`text-[10px] font-black uppercase tracking-widest ${product.stock === 0 ? "text-red-500" : product.stock <= 5 ? "text-orange-500" : "text-green-500"}`}>
@@ -458,10 +462,10 @@ export default function ProductDetails() {
                             </div>
 
                             {/* Quantity Selector */}
-                            <div className={`flex items-center bg-gray-50 rounded-2xl p-1 h-14 sm:h-16 w-full sm:w-auto ${product.stock === 0 ? "opacity-50 pointer-events-none" : ""}`}>
+                            <div className={`flex items-center bg-gray-50 rounded-2xl p-1 h-11 sm:h-16 w-full sm:w-auto ${product.stock === 0 ? "opacity-50 pointer-events-none" : ""}`}>
                                 <button
                                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                    className="w-14 sm:w-12 h-full rounded-xl hover:bg-white hover:shadow-sm active:scale-95 active:bg-brand-navy active:text-white text-xl font-bold transition-all"
+                                    className="w-10 sm:w-12 h-full rounded-xl hover:bg-white hover:shadow-sm active:scale-95 active:bg-brand-navy active:text-white text-xl font-bold transition-all"
                                     disabled={product.stock === 0 || quantity <= 1}
                                     aria-label="Decrease quantity"
                                 >
@@ -473,7 +477,7 @@ export default function ProductDetails() {
                                         const maxQty = product.stock > 0 ? product.stock : 99;
                                         return Math.min(maxQty, q + 1);
                                     })}
-                                    className="w-14 sm:w-12 h-full rounded-xl hover:bg-white hover:shadow-sm active:scale-95 active:bg-brand-navy active:text-white text-xl font-bold transition-all"
+                                    className="w-10 sm:w-12 h-full rounded-xl hover:bg-white hover:shadow-sm active:scale-95 active:bg-brand-navy active:text-white text-xl font-bold transition-all"
                                     disabled={product.stock === 0 || (product.stock > 0 && quantity >= product.stock)}
                                     aria-label="Increase quantity"
                                 >
@@ -486,7 +490,7 @@ export default function ProductDetails() {
                                 variant={product.stock === 0 ? "secondary" : "primary"}
                                 size="lg"
                                 uppercase={false}
-                                className={`flex-1 h-14 sm:h-16 rounded-2xl gap-3 sm:gap-4 shadow-xl shadow-brand-navy/10 group normal-case min-w-[200px] transition-all active:scale-[0.98] ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "hover:-translate-y-0.5 hover:shadow-brand-orange/20"}`}
+                                className={`flex-1 h-11 sm:h-16 rounded-2xl gap-2 sm:gap-4 shadow-xl shadow-brand-navy/10 group normal-case min-w-0 transition-all active:scale-[0.98] ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "hover:-translate-y-0.5 hover:shadow-brand-orange/20"}`}
                                 disabled={product.stock === 0}
                                 onClick={() => {
                                     if (product.stock === 0) return;
