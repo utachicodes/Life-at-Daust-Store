@@ -25,7 +25,8 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
         hoodieTypes: [],
         buyingPrice: "",
     });
-    const [colorImages, setColorImages] = useState(null);
+    const [colorImages, setColorImages] = useState(null); // raw storage IDs — used for saving
+    const [colorImagesDisplay, setColorImagesDisplay] = useState(null); // resolved URLs — used for thumbnails
 
     const [imageFile, setImageFile] = useState(null);
     const [imagePreview, setImagePreview] = useState("");
@@ -68,7 +69,8 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                 hoodieTypes: product.hoodieTypes || [],
                 buyingPrice: product.buyingPrice?.toString() || "",
             });
-            setColorImages(product.logoImages || null);
+            setColorImages(product.logoImagesRaw || null); // raw kg... IDs for saving
+            setColorImagesDisplay(product.logoImages || null); // resolved URLs for display
             setImagePreview(product.image || "");
         }
     }, [product]);
@@ -187,7 +189,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
 
     const defaultSizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
-    // Keep storage IDs (start with "kg") and resolved Convex storage URLs (https://)
+    // Only keep raw storage IDs (start with "kg") — never store resolved URLs in DB
     const sanitizeLogoImages = (logoImages) => {
         if (!logoImages || typeof logoImages !== "object") return logoImages;
         const out = {};
@@ -196,7 +198,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
             if (colorMap && typeof colorMap === "object") {
                 for (const [colorName, images] of Object.entries(colorMap)) {
                     if (Array.isArray(images)) {
-                        out[logoKey][colorName] = images.filter(img => typeof img === "string" && (img.startsWith("kg") || img.startsWith("https://")));
+                        out[logoKey][colorName] = images.filter(img => typeof img === "string" && img.startsWith("kg"));
                     }
                 }
             }
@@ -618,26 +620,36 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                         <p className="text-[10px] text-gray-400 font-bold mb-4">Upload images for each color. These show when a customer selects that color.</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {formData.colors.map((color) => {
-                                const images = colorImages?.["_default"]?.[color.name] || [];
+                                const rawIds = colorImages?.["_default"]?.[color.name] || [];
+                                const displayUrls = colorImagesDisplay?.["_default"]?.[color.name] || [];
+                                // Use display URLs for existing images, raw IDs for newly uploaded (shown as count)
+                                const count = rawIds.length;
                                 return (
                                     <div key={color.name} className="bg-white rounded-xl p-3 border border-gray-100">
                                         <div className="flex items-center gap-2 mb-2">
                                             <span className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }} />
                                             <span className="text-xs font-bold text-brand-navy">{color.name}</span>
-                                            <span className="text-[10px] text-gray-400 ml-auto">{images.length} image{images.length !== 1 ? "s" : ""}</span>
+                                            <span className="text-[10px] text-gray-400 ml-auto">{count} image{count !== 1 ? "s" : ""}</span>
                                         </div>
                                         <div className="flex flex-wrap gap-1.5 mb-2">
-                                            {images.map((img, idx) => (
+                                            {rawIds.map((id, idx) => (
                                                 <div key={idx} className="relative w-14 h-14 rounded-lg overflow-hidden bg-gray-100 group">
-                                                    <img src={typeof img === "string" ? img : ""} alt="" className="w-full h-full object-cover" />
+                                                    <img src={displayUrls[idx] || ""} alt="" className="w-full h-full object-cover" />
                                                     <button
                                                         type="button"
                                                         onClick={() => {
+                                                            const colorName = color.name;
                                                             setColorImages(prev => {
                                                                 const base = prev || {};
-                                                                const defaultMap = { ...(base["_default"] || {}) };
-                                                                defaultMap[color.name] = (defaultMap[color.name] || []).filter((_, i) => i !== idx);
-                                                                return { ...base, "_default": defaultMap };
+                                                                const dm = { ...(base["_default"] || {}) };
+                                                                dm[colorName] = (dm[colorName] || []).filter((_, i) => i !== idx);
+                                                                return { ...base, "_default": dm };
+                                                            });
+                                                            setColorImagesDisplay(prev => {
+                                                                const base = prev || {};
+                                                                const dm = { ...(base["_default"] || {}) };
+                                                                dm[colorName] = (dm[colorName] || []).filter((_, i) => i !== idx);
+                                                                return { ...base, "_default": dm };
                                                             });
                                                         }}
                                                         className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
@@ -656,9 +668,13 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                                     onChange={async (e) => {
                                                         const files = Array.from(e.target.files || []);
                                                         if (files.length === 0) return;
+                                                        const colorName = color.name;
                                                         const newStorageIds = [];
+                                                        const newBlobUrls = [];
                                                         for (const file of files) {
                                                             const optimized = await optimizeImage(file);
+                                                            const blobUrl = createPreviewUrl(optimized);
+                                                            newBlobUrls.push(blobUrl);
                                                             const postUrl = await generateUploadUrl();
                                                             const result = await fetch(postUrl, {
                                                                 method: "POST",
@@ -670,9 +686,15 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                                                         }
                                                         setColorImages(prev => {
                                                             const base = prev || {};
-                                                            const defaultMap = { ...(base["_default"] || {}) };
-                                                            defaultMap[color.name] = [...(defaultMap[color.name] || []), ...newStorageIds];
-                                                            return { ...base, "_default": defaultMap };
+                                                            const dm = { ...(base["_default"] || {}) };
+                                                            dm[colorName] = [...(dm[colorName] || []), ...newStorageIds];
+                                                            return { ...base, "_default": dm };
+                                                        });
+                                                        setColorImagesDisplay(prev => {
+                                                            const base = prev || {};
+                                                            const dm = { ...(base["_default"] || {}) };
+                                                            dm[colorName] = [...(dm[colorName] || []), ...newBlobUrls];
+                                                            return { ...base, "_default": dm };
                                                         });
                                                         e.target.value = "";
                                                     }}

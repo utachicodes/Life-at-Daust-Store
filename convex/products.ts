@@ -52,6 +52,7 @@ export const list = query({
                 image: imageUrl,
                 logos,
                 logoImages,
+                logoImagesRaw: product.logoImages ?? null,
             };
         }));
     },
