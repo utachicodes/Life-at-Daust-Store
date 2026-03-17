@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { X, Save, Trash2, Image as ImageIcon, AlertCircle, Plus } from "lucide-react";
@@ -31,6 +31,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
     const [imagePreview, setImagePreview] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const initializedForId = useRef(null);
 
     const [newColorName, setNewColorName] = useState("");
     const [newColorHex, setNewColorHex] = useState("#000000");
@@ -48,7 +49,8 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
     const categories = ["T-Shirts", "Hoodies", "Quarter Zip", "Caps", "Shorts", "Joggers", "Drinkware", "Accessories"];
 
     useEffect(() => {
-        if (product) {
+        if (product && product._id !== initializedForId.current) {
+            initializedForId.current = product._id;
             setFormData({
                 name: product.name || "",
                 category: product.category || "Accessories",
