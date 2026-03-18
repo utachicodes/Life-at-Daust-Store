@@ -7,6 +7,8 @@ import Button from "../components/ui/Button";
 
 export default function Cart() {
   const { items, removeItem, setQty, count, subtotal, totalSavings, logoFees, total } = useCart();
+  const discountAmount = Math.round(total * 0.15);
+  const discountedTotal = total - discountAmount;
   const [summaryOpen, setSummaryOpen] = useState(false);
 
   // Separate product sets from regular items
@@ -292,6 +294,10 @@ export default function Cart() {
                   <span className="text-white/60 font-medium text-sm sm:text-base">Est. Shipping</span>
                   <span className="font-bold text-brand-orange uppercase text-xs tracking-widest">Complimentary</span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-green-400 font-bold text-sm sm:text-base">15% Discount</span>
+                  <span className="font-bold text-green-400 text-sm sm:text-base">-{formatPrice(discountAmount)}</span>
+                </div>
               </div>
 
               <div className="h-[1px] bg-white/10 my-6 sm:my-8" />
@@ -299,7 +305,7 @@ export default function Cart() {
               <div className="flex justify-between items-end mb-6 sm:mb-10">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-orange">Estimated Total</p>
-                  <p className="text-3xl sm:text-4xl font-black tracking-tighter">{formatPrice(total)}</p>
+                  <p className="text-3xl sm:text-4xl font-black tracking-tighter">{formatPrice(discountedTotal)}</p>
                 </div>
               </div>
 
