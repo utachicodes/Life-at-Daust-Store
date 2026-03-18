@@ -47,12 +47,24 @@ export const list = query({
                 }));
             }
             const logoImages = await resolveLogoImages(ctx, product.logoImages);
+            let logoCombinations = product.logoCombinations;
+            if (logoCombinations) {
+                logoCombinations = await Promise.all(logoCombinations.map(async (combo: any) => {
+                    if (combo.image && combo.image.startsWith("kg")) {
+                        const url = await ctx.storage.getUrl(combo.image);
+                        return { ...combo, image: url || combo.image };
+                    }
+                    return combo;
+                }));
+            }
             return {
                 ...product,
                 image: imageUrl,
                 logos,
                 logoImages,
                 logoImagesRaw: product.logoImages ?? null,
+                logoCombinations: logoCombinations ?? [],
+                logoCombinationsRaw: product.logoCombinations ?? [],
             };
         }));
     },
@@ -78,12 +90,24 @@ export const getById = query({
             }));
         }
         const logoImages = await resolveLogoImages(ctx, product.logoImages);
+        let logoCombinations = product.logoCombinations;
+        if (logoCombinations) {
+            logoCombinations = await Promise.all(logoCombinations.map(async (combo: any) => {
+                if (combo.image && combo.image.startsWith("kg")) {
+                    const url = await ctx.storage.getUrl(combo.image);
+                    return { ...combo, image: url || combo.image };
+                }
+                return combo;
+            }));
+        }
         return {
             ...product,
             image: imageUrl,
             logos,
             logoImages,
             logoImagesRaw: product.logoImages ?? null,
+            logoCombinations: logoCombinations ?? [],
+            logoCombinationsRaw: product.logoCombinations ?? [],
         };
     },
 });
@@ -244,6 +268,10 @@ export const addProduct = mutation({
         shippingTimeline: v.optional(v.string()),
         hoodieTypes: v.optional(v.array(v.string())),
         buyingPrice: v.optional(v.number()),
+        logoCombinations: v.optional(v.array(v.object({
+            logoIds: v.array(v.string()),
+            image: v.string(),
+        }))),
         adminToken: v.string(),
     },
     handler: async (ctx, args) => {
@@ -315,6 +343,10 @@ export const updateProduct = mutation({
         shippingTimeline: v.optional(v.string()),
         hoodieTypes: v.optional(v.array(v.string())),
         buyingPrice: v.optional(v.number()),
+        logoCombinations: v.optional(v.array(v.object({
+            logoIds: v.array(v.string()),
+            image: v.string(),
+        }))),
         adminToken: v.string(),
     },
     handler: async (ctx, args) => {

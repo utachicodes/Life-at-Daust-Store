@@ -42,6 +42,13 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
     const [newLogoPositions, setNewLogoPositions] = useState(["front", "back"]);
     const [logoUploading, setLogoUploading] = useState(false);
 
+    const [logoCombinations, setLogoCombinations] = useState([]); // raw storage IDs for saving
+    const [logoCombinationsDisplay, setLogoCombinationsDisplay] = useState([]); // URLs for preview
+    const [newComboLogoIds, setNewComboLogoIds] = useState(["", ""]);
+    const [newComboFile, setNewComboFile] = useState(null);
+    const [newComboPreview, setNewComboPreview] = useState("");
+    const [comboUploading, setComboUploading] = useState(false);
+
     const generateUploadUrl = useMutation(api.products.generateUploadUrl);
     const addProduct = useMutation(api.products.addProduct);
     const updateProduct = useMutation(api.products.updateProduct);
@@ -69,9 +76,11 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                 hoodieTypes: product.hoodieTypes || [],
                 buyingPrice: product.buyingPrice?.toString() || "",
             });
-            setColorImages(product.logoImagesRaw || null); // raw kg... IDs for saving
-            setColorImagesDisplay(product.logoImages || null); // resolved URLs for display
+            setColorImages(product.logoImagesRaw || null);
+            setColorImagesDisplay(product.logoImages || null);
             setImagePreview(product.image || "");
+            setLogoCombinations(product.logoCombinationsRaw || []);
+            setLogoCombinationsDisplay(product.logoCombinations || []);
         }
     }, [product]);
 
@@ -239,6 +248,7 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                 shippingTimeline: formData.shippingTimeline || undefined,
                 hoodieTypes: formData.hoodieTypes,
                 buyingPrice: formData.buyingPrice !== "" ? parseFloat(formData.buyingPrice) : undefined,
+                logoCombinations: logoCombinations.length > 0 ? logoCombinations : undefined,
             };
 
             if (product) {
@@ -547,6 +557,107 @@ export default function AdminProductForm({ product, onSave, onCancel }) {
                         </button>
                     </div>
                 </div>
+
+                {/* Logo Combinations Section */}
+                {formData.logos.length >= 2 && (
+                    <div className="bg-gray-50 rounded-2xl md:rounded-3xl p-4 md:p-8">
+                        <h3 className="font-black text-brand-navy mb-1 text-sm md:text-base">Logo Combinations</h3>
+                        <p className="text-[10px] text-gray-400 font-bold mb-4">Upload a combined image shown when two back logos are selected together.</p>
+
+                        {/* Existing combinations */}
+                        {logoCombinations.length > 0 && (
+                            <div className="space-y-2 mb-4">
+                                {logoCombinations.map((combo, idx) => {
+                                    const logo1 = formData.logos.find(l => l.id === combo.logoIds[0]);
+                                    const logo2 = formData.logos.find(l => l.id === combo.logoIds[1]);
+                                    const displayUrl = logoCombinationsDisplay[idx]?.image;
+                                    return (
+                                        <div key={idx} className="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-100">
+                                            {displayUrl && <img src={displayUrl} alt="combo" className="w-12 h-12 rounded-lg object-cover border border-gray-100" />}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-black text-brand-navy truncate">{logo1?.name || combo.logoIds[0]} + {logo2?.name || combo.logoIds[1]}</p>
+                                            </div>
+                                            <button type="button" onClick={() => {
+                                                setLogoCombinations(prev => prev.filter((_, i) => i !== idx));
+                                                setLogoCombinationsDisplay(prev => prev.filter((_, i) => i !== idx));
+                                            }} className="text-gray-400 hover:text-red-500 flex-shrink-0">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Add new combination */}
+                        <div className="flex flex-wrap items-end gap-2">
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">Logo 1</label>
+                                <select
+                                    value={newComboLogoIds[0]}
+                                    onChange={e => setNewComboLogoIds([e.target.value, newComboLogoIds[1]])}
+                                    className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-brand-navy"
+                                >
+                                    <option value="">Select</option>
+                                    {formData.logos.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">Logo 2</label>
+                                <select
+                                    value={newComboLogoIds[1]}
+                                    onChange={e => setNewComboLogoIds([newComboLogoIds[0], e.target.value])}
+                                    className="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold text-brand-navy"
+                                >
+                                    <option value="">Select</option>
+                                    {formData.logos.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400">Combined Image</label>
+                                {newComboPreview ? (
+                                    <div className="relative w-11 h-11">
+                                        <img src={newComboPreview} alt="combo preview" className="w-11 h-11 rounded-xl object-cover border border-gray-200" />
+                                        <button type="button" onClick={() => { setNewComboFile(null); setNewComboPreview(""); }} className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                                            <X size={8} className="text-white" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <label className="flex items-center justify-center w-11 h-11 bg-white rounded-xl cursor-pointer hover:bg-gray-100 transition-colors border border-dashed border-gray-300">
+                                        <ImageIcon size={18} className="text-gray-400" />
+                                        <input type="file" accept="image/*" className="hidden" onChange={e => {
+                                            const f = e.target.files[0];
+                                            if (f) { setNewComboFile(f); setNewComboPreview(createPreviewUrl(f)); }
+                                        }} />
+                                    </label>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                disabled={comboUploading || !newComboLogoIds[0] || !newComboLogoIds[1] || newComboLogoIds[0] === newComboLogoIds[1] || !newComboFile}
+                                onClick={async () => {
+                                    if (!newComboFile || !newComboLogoIds[0] || !newComboLogoIds[1]) return;
+                                    setComboUploading(true);
+                                    try {
+                                        const optimized = await optimizeImage(newComboFile);
+                                        const postUrl = await generateUploadUrl();
+                                        const result = await fetch(postUrl, { method: "POST", headers: { "Content-Type": optimized.type }, body: optimized });
+                                        const { storageId } = await result.json();
+                                        setLogoCombinations(prev => [...prev, { logoIds: [newComboLogoIds[0], newComboLogoIds[1]], image: storageId }]);
+                                        setLogoCombinationsDisplay(prev => [...prev, { logoIds: [newComboLogoIds[0], newComboLogoIds[1]], image: newComboPreview }]);
+                                        setNewComboLogoIds(["", ""]);
+                                        setNewComboFile(null);
+                                        setNewComboPreview("");
+                                    } catch { setError("Failed to upload combination image."); }
+                                    finally { setComboUploading(false); }
+                                }}
+                                className="bg-brand-navy text-white px-3 py-2.5 rounded-xl font-bold text-xs hover:bg-brand-navy/90 disabled:opacity-50 h-[42px]"
+                            >
+                                {comboUploading ? "..." : <Plus size={18} />}
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-gray-50 rounded-2xl md:rounded-3xl p-4 md:p-8">
                     <h3 className="font-black text-brand-navy mb-3 md:mb-4 text-sm md:text-base">Sizes</h3>

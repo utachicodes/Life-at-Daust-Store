@@ -23,6 +23,10 @@ export default defineSchema({
             positions: v.optional(v.array(v.string())),
         }))),
         logoImages: v.optional(v.any()),
+        logoCombinations: v.optional(v.array(v.object({
+            logoIds: v.array(v.string()),
+            image: v.string(),
+        }))),
         description: v.optional(v.string()),
         collection: v.optional(v.string()),
         stock: v.optional(v.number()),

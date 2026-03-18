@@ -288,15 +288,32 @@ export default function ProductDetails() {
                                                     key={logo.id || logo.name}
                                                     type="button"
                                                     onClick={() => {
-                                                        setSelectedBackLogos(prev =>
-                                                            isSelected ? prev.filter(l => !((l.id && l.id === logo.id) || l.name === logo.name)) : [...prev, logo]
-                                                        );
-                                                        if (!isSelected && logo.image && window.innerWidth < 1024) {
-                                                            document.getElementById('product-image')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                        }
-                                                        if (!isSelected && logo.image) {
-                                                            setLogoPreview(logo.image);
-                                                            setTimeout(() => setLogoPreview(null), 2500);
+                                                        const updatedLogos = isSelected
+                                                            ? selectedBackLogos.filter(l => !((l.id && l.id === logo.id) || l.name === logo.name))
+                                                            : [...selectedBackLogos, logo];
+                                                        setSelectedBackLogos(updatedLogos);
+                                                        if (!isSelected) {
+                                                            if (window.innerWidth < 1024) {
+                                                                document.getElementById('product-image')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                            }
+                                                            if (updatedLogos.length === 2) {
+                                                                const ids = updatedLogos.map(l => l.id);
+                                                                const combo = product.logoCombinations?.find(c =>
+                                                                    c.logoIds.length === 2 &&
+                                                                    ids.every(id => c.logoIds.includes(id)) &&
+                                                                    c.logoIds.every(id => ids.includes(id))
+                                                                );
+                                                                if (combo?.image) {
+                                                                    setLogoPreview(combo.image);
+                                                                    setTimeout(() => setLogoPreview(null), 4000);
+                                                                } else if (logo.image) {
+                                                                    setLogoPreview(logo.image);
+                                                                    setTimeout(() => setLogoPreview(null), 2500);
+                                                                }
+                                                            } else if (logo.image) {
+                                                                setLogoPreview(logo.image);
+                                                                setTimeout(() => setLogoPreview(null), 2500);
+                                                            }
                                                         }
                                                     }}
                                                     className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
