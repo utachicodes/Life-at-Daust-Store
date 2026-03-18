@@ -296,10 +296,18 @@ export default function Cart() {
                   <span className="text-white/60 font-medium text-sm sm:text-base">Est. Shipping</span>
                   <span className="font-bold text-brand-orange uppercase text-xs tracking-widest">Complimentary</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-green-400 font-bold text-sm sm:text-base">15% Discount</span>
-                  <span className="font-bold text-green-400 text-sm sm:text-base">-{formatPrice(discountAmount)}</span>
-                </div>
+                {regularTotal > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-400 font-bold text-sm sm:text-base">15% Discount</span>
+                    <span className="font-bold text-green-400 text-sm sm:text-base">-{formatPrice(Math.round(regularTotal * 0.15))}</span>
+                  </div>
+                )}
+                {setSubtotal > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-400 font-bold text-sm sm:text-base">5% Discount (Bundles)</span>
+                    <span className="font-bold text-green-400 text-sm sm:text-base">-{formatPrice(Math.round(setSubtotal * 0.05))}</span>
+                  </div>
+                )}
               </div>
 
               <div className="h-[1px] bg-white/10 my-6 sm:my-8" />

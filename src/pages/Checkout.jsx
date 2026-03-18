@@ -443,10 +443,18 @@ export default function Checkout() {
                   <span>Shipping</span>
                   <span className="text-brand-orange uppercase text-[10px] font-black tracking-widest">Free</span>
                 </div>
-                <div className="flex justify-between items-center text-green-400 font-black">
-                  <span>15% Discount</span>
-                  <span>-{fmt(discountAmount)}</span>
-                </div>
+                {regularBase > 0 && (
+                  <div className="flex justify-between items-center text-green-400 font-black">
+                    <span>15% Discount</span>
+                    <span>-{fmt(Math.round(regularBase * 0.15))}</span>
+                  </div>
+                )}
+                {setSubtotal > 0 && (
+                  <div className="flex justify-between items-center text-green-400 font-black">
+                    <span>5% Discount (Bundles)</span>
+                    <span>-{fmt(Math.round(setSubtotal * 0.05))}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-lg sm:text-xl font-black pt-3 sm:pt-4">
                   <span>Final Total</span>
                   <span className="text-brand-orange">{fmt(total)}</span>
