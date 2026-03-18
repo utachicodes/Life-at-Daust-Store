@@ -133,7 +133,7 @@ export function CartProvider({ children }) {
         productSetName: productSet.name,
         products: productSet.products,
         originalPrice: productSet.originalPrice,
-        savings: Math.round(productSet.specialPrice * 0.08),
+        savings: 0,
         variantSelections,
         selectedColor: null,
         selectedSize: null,
@@ -184,7 +184,7 @@ export function CartProvider({ children }) {
   );
 
   const shipping = subtotal > 0 ? 0 : 0;
-  const total = subtotal - totalSavings + shipping + logoFees;
+  const total = subtotal + shipping + logoFees;
 
   const value = {
     items,
