@@ -31,19 +31,14 @@ export const getDiscountEligibility = query({
   args: { phone: v.string() },
   handler: async (ctx, args) => {
     const allOrders = await ctx.db.query("orders").collect();
-    const discountedOrders = allOrders.filter(o => o.discount && o.discount > 0 && o.status !== "Refunded" && o.status !== "Cancelled");
+    const confirmedStatuses = ["Paid", "Processing", "Shipped", "Delivered"];
+    const discountedOrders = allOrders.filter(o => o.discount && o.discount > 0 && confirmedStatuses.includes(o.status));
     const slotsUsed = discountedOrders.length;
-
-    const normalized = args.phone.replace(/\s/g, "");
-    const alreadyUsed = discountedOrders.some(o => {
-      const stored = o.customer.phone.replace(/\s/g, "");
-      return stored === normalized || stored.endsWith(normalized) || normalized.endsWith(stored);
-    });
 
     return {
       slotsUsed,
       slotsRemaining: Math.max(0, 10 - slotsUsed),
-      eligible: slotsUsed < 10 && !alreadyUsed,
+      eligible: slotsUsed < 10,
     };
   },
 });
@@ -80,20 +75,12 @@ export const addOrder = mutation({
     discount: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    // Server-side discount guard to prevent race conditions
     if (args.discount && args.discount > 0) {
+      const confirmedStatuses = ["Paid", "Processing", "Shipped", "Delivered"];
       const allOrders = await ctx.db.query("orders").collect();
-      const discountedOrders = allOrders.filter(o => o.discount && o.discount > 0);
+      const discountedOrders = allOrders.filter(o => o.discount && o.discount > 0 && confirmedStatuses.includes(o.status));
       if (discountedOrders.length >= 10) {
         throw new Error("Sorry, the early customer discount is no longer available.");
-      }
-      const normalized = args.customer.phone.replace(/\s/g, "");
-      const alreadyUsed = discountedOrders.some(o => {
-        const stored = o.customer.phone.replace(/\s/g, "");
-        return stored === normalized || stored.endsWith(normalized) || normalized.endsWith(stored);
-      });
-      if (alreadyUsed) {
-        throw new Error("This phone number has already redeemed the early customer discount.");
       }
     }
 

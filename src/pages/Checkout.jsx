@@ -44,10 +44,14 @@ export default function Checkout() {
     return loc ? loc.fee : 0;
   }, [form.location]);
 
+  const discountInfo = useQuery(api.orders.getDiscountEligibility, { phone: "" });
+
   const baseTotal = subtotal + deliveryFee + logoFees;
   const setSubtotal = items.filter(i => i.isProductSet).reduce((s, i) => s + i.price * i.qty, 0);
   const regularBase = baseTotal - setSubtotal;
-  const discountAmount = Math.round(regularBase * 0.15) + Math.round(setSubtotal * 0.05);
+  const regularDiscount = discountInfo?.eligible ? Math.round(regularBase * 0.15) : 0;
+  const setDiscount = discountInfo?.eligible ? Math.round(setSubtotal * 0.05) : 0;
+  const discountAmount = regularDiscount + setDiscount;
   const total = baseTotal - discountAmount;
 
   // Separate product sets and regular items
@@ -199,15 +203,22 @@ export default function Checkout() {
             </div>
           )}
 
-          <div className="mb-8 sm:mb-10 p-4 sm:p-5 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3 sm:gap-4 animate-in slide-in-from-top-3 duration-500">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Tag size={18} className="text-green-600" />
+          {discountInfo?.eligible && (
+            <div className="mb-8 sm:mb-10 p-4 sm:p-5 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3 sm:gap-4 animate-in slide-in-from-top-3 duration-500">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Tag size={18} className="text-green-600" />
+              </div>
+              <div>
+                <p className="font-black text-sm text-green-800 uppercase tracking-wide">Early Customer Discount Applied!</p>
+                <p className="text-xs text-green-600 font-medium mt-0.5">
+                  You save {fmt(discountAmount)} on this order.
+                  {discountInfo?.slotsRemaining <= 3 && (
+                    <span className="ml-1 font-black text-brand-orange">Only {discountInfo.slotsRemaining} spot{discountInfo.slotsRemaining !== 1 ? "s" : ""} left!</span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="font-black text-sm text-green-800 uppercase tracking-wide">15% Discount Applied!</p>
-              <p className="text-xs text-green-600 font-medium mt-0.5">You save {fmt(discountAmount)} on this order.</p>
-            </div>
-          </div>
+          )}
 
           <form onSubmit={submit} className="space-y-6 sm:space-y-8">
             <div className="grid gap-6 sm:gap-8 sm:grid-cols-2">
@@ -417,10 +428,12 @@ export default function Checkout() {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2 mb-4">
-                <Tag size={14} className="text-green-400 flex-shrink-0" />
-                <p className="text-[11px] font-black text-green-400 uppercase tracking-wider">15% Discount Applied!</p>
-              </div>
+              {discountInfo?.eligible && (
+                <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2 mb-4">
+                  <Tag size={14} className="text-green-400 flex-shrink-0" />
+                  <p className="text-[11px] font-black text-green-400 uppercase tracking-wider">Early Customer Discount Applied!</p>
+                </div>
+              )}
 
               <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm font-medium border-t border-white/10 pt-5 sm:pt-6 mt-5 sm:mt-6">
                 <div className="flex justify-between items-center text-brand-cream/60">
@@ -443,16 +456,16 @@ export default function Checkout() {
                   <span>Shipping</span>
                   <span className="text-brand-orange uppercase text-[10px] font-black tracking-widest">Free</span>
                 </div>
-                {regularBase > 0 && (
+                {discountInfo?.eligible && regularBase > 0 && (
                   <div className="flex justify-between items-center text-green-400 font-black">
                     <span>15% Discount</span>
-                    <span>-{fmt(Math.round(regularBase * 0.15))}</span>
+                    <span>-{fmt(regularDiscount)}</span>
                   </div>
                 )}
-                {setSubtotal > 0 && (
+                {discountInfo?.eligible && setSubtotal > 0 && (
                   <div className="flex justify-between items-center text-green-400 font-black">
                     <span>5% Discount (Bundles)</span>
-                    <span>-{fmt(Math.round(setSubtotal * 0.05))}</span>
+                    <span>-{fmt(setDiscount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center text-lg sm:text-xl font-black pt-3 sm:pt-4">
