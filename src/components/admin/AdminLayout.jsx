@@ -172,6 +172,15 @@ export default function AdminLayout() {
                             <span className="text-xs font-black text-brand-navy uppercase tracking-widest leading-none mb-1">{isPartner ? "Uniwear Partner" : "System Admin"}</span>
                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{isPartner ? "Partner Access" : "Authorized Session"}</span>
                         </div>
+                        {isPartner && (
+                            <button
+                                onClick={logout}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 border border-red-200 font-bold text-xs uppercase tracking-widest transition-all"
+                            >
+                                <LogOut size={14} />
+                                <span className="hidden sm:inline">Sign Out</span>
+                            </button>
+                        )}
                         <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-brand-navy shadow-lg shadow-brand-navy/20 flex items-center justify-center group cursor-pointer hover:bg-brand-orange transition-all duration-500 overflow-hidden relative">
                             <span className="text-white font-[900] text-base lg:text-lg relative z-10 transition-transform group-hover:scale-110">A</span>
                             <div className="absolute inset-0 bg-brand-orange translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
