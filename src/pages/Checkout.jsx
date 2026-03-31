@@ -48,18 +48,28 @@ export default function Checkout() {
 
   // Coupon state
   const [couponApplied, setCouponApplied] = useState(false);
+  const [couponResult, setCouponResult] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   const addOrder = useMutation(api.orders.addOrder);
   const updateNabooPayDetails = useMutation(api.orders.updateNabooPayDetails);
   const createNabooPayTransaction = useAction(api.naboopay.createTransaction);
   const applyReferralCodeMutation = useMutation(api.referrals.applyReferralCode);
+  const applyCouponMutation = useMutation(api.referrals.applyCoupon);
+
+  // Fetch user's coupon if logged in
+  const userCoupon = useQuery(
+    api.referrals.getUserCoupon,
+    session?.userId ? { userId: session.userId } : "skip"
+  );
 
   const deliveryFee = useMemo(() => {
     const loc = locations.find(l => l.name === form.location);
     return loc ? loc.fee : 0;
   }, [form.location]);
 
-  const discountInfo = useQuery(api.orders.getDiscountEligibility, { phone: "" });
+  const discountInfo = useQuery(api.orders.getDiscountEligibility, { phone: form.phone || "" });
 
   const baseTotal = subtotal + deliveryFee + logoFees;
   const setSubtotal = items.filter(i => i.isProductSet).reduce((s, i) => s + i.price * i.qty, 0);
@@ -67,7 +77,9 @@ export default function Checkout() {
   const regularDiscount = discountInfo?.eligible ? Math.round(regularBase * 0.15) : 0;
   const setDiscount = discountInfo?.eligible ? Math.round(setSubtotal * 0.05) : 0;
   const discountAmount = regularDiscount + setDiscount;
-  const total = baseTotal - discountAmount;
+  const referralDiscount = appliedReferral?.discount || 0;
+  const couponDiscount = couponResult?.discount || 0;
+  const total = baseTotal - discountAmount - referralDiscount - couponDiscount;
 
   // Separate product sets and regular items
   const productSetItems = items.filter(item => item.isProductSet);
@@ -118,6 +130,27 @@ export default function Checkout() {
     }
   };
 
+  const handleApplyCoupon = async () => {
+    if (!session?.userId) return;
+    setCouponError("");
+    setCouponLoading(true);
+    try {
+      const result = await applyCouponMutation({
+        userId: session.userId,
+        cartItems: items.map((it) => ({ name: it.name, price: it.price, qty: it.qty })),
+      });
+      setCouponResult(result);
+      setCouponApplied(true);
+      setCouponError("");
+    } catch (err) {
+      setCouponError(err.message || "Could not apply coupon.");
+      setCouponResult(null);
+      setCouponApplied(false);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
   if (items.length === 0) {
     return (
       <main className="max-w-7xl mx-auto px-4 py-32 text-center animate-in fade-in duration-700">
@@ -154,6 +187,9 @@ export default function Checkout() {
         total,
         paymentMethod: "naboopay",
         ...(discountAmount > 0 ? { discount: discountAmount } : {}),
+        ...(session?.userId ? { buyerUserId: session.userId } : {}),
+        ...(appliedReferral ? { referralCode: appliedReferral.code || referralInput.trim().toUpperCase(), referralDiscount } : {}),
+        ...(couponApplied ? { couponApplied: true, couponDiscount } : {}),
       });
 
       // Create NabooPay transaction
@@ -176,6 +212,16 @@ export default function Checkout() {
                 name: "Early Customer Discount (-15%)",
                 qty: 1,
                 price: -discountAmount,
+              }] : []),
+              ...(referralDiscount > 0 ? [{
+                name: "Referral Discount (-7%)",
+                qty: 1,
+                price: -referralDiscount,
+              }] : []),
+              ...(couponDiscount > 0 ? [{
+                name: `Coupon Discount (-${couponResult?.coupon_percent}%)`,
+                qty: 1,
+                price: -couponDiscount,
               }] : []),
             ],
             successUrl: `https://shop.daustgov.com/order/success/${orderId}`,
@@ -313,6 +359,59 @@ export default function Checkout() {
                 <p className="text-[10px] text-brand-orange ml-1 italic font-bold">A staff member will contact you to confirm the delivery fee for your specific location prior to dispatch.</p>
               )}
             </div>
+
+            {/* Referral Code */}
+            <div className="border border-gray-200 rounded-2xl p-5 sm:p-6 space-y-4">
+              <h3 className="text-sm font-black text-brand-navy uppercase tracking-wider">Referral Code</h3>
+              {appliedReferral ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-green-800">Code applied: {referralInput.toUpperCase()}</p>
+                    <p className="text-[10px] text-green-600 mt-0.5">You save {fmt(referralDiscount)} (7% off eligible items)</p>
+                  </div>
+                  <button type="button" onClick={() => { setAppliedReferral(null); setReferralInput(""); }} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Remove</button>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={referralInput}
+                    onChange={(e) => setReferralInput(e.target.value)}
+                    placeholder="Enter referral code"
+                    className="flex-1 h-12 bg-white border border-gray-100 rounded-xl px-4 text-brand-navy font-bold text-sm focus:ring-2 focus:ring-brand-orange/10 focus:border-brand-orange outline-none transition-all"
+                  />
+                  <Button type="button" onClick={handleApplyReferral} loading={referralLoading} className="h-12 px-5 !text-xs !rounded-xl">
+                    Apply
+                  </Button>
+                </div>
+              )}
+              {referralError && <p className="text-xs text-red-500 font-bold">{referralError}</p>}
+            </div>
+
+            {/* Coupon */}
+            {userCoupon?.hasActiveCoupon && !couponApplied && (
+              <div className="border border-green-200 bg-green-50 rounded-2xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-black text-green-800 uppercase tracking-wider">Referral Coupon Available</h3>
+                    <p className="text-xs text-green-600 mt-1">You have a {userCoupon.coupon_percent}% coupon from referrals!</p>
+                  </div>
+                  <Button type="button" onClick={handleApplyCoupon} loading={couponLoading} className="h-10 px-5 !text-xs !rounded-xl">
+                    Use Coupon
+                  </Button>
+                </div>
+                {couponError && <p className="text-xs text-red-500 font-bold">{couponError}</p>}
+              </div>
+            )}
+            {couponApplied && couponResult && (
+              <div className="border border-green-200 bg-green-50 rounded-2xl p-5 sm:p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-green-800">Coupon applied: {couponResult.coupon_percent}% off</p>
+                  <p className="text-[10px] text-green-600 mt-0.5">You save {fmt(couponDiscount)} on eligible items</p>
+                </div>
+                <button type="button" onClick={() => { setCouponApplied(false); setCouponResult(null); }} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Remove</button>
+              </div>
+            )}
 
             <div className="border border-gray-200 rounded-2xl p-5 sm:p-6 space-y-5 sm:space-y-6">
               <h3 className="text-base sm:text-lg font-black text-brand-navy tracking-tight">Payment Method</h3>
@@ -502,6 +601,18 @@ export default function Checkout() {
                   <div className="flex justify-between items-center text-green-400 font-black">
                     <span>5% Discount (Bundles)</span>
                     <span>-{fmt(setDiscount)}</span>
+                  </div>
+                )}
+                {referralDiscount > 0 && (
+                  <div className="flex justify-between items-center text-green-400 font-black">
+                    <span>Referral Discount (7%)</span>
+                    <span>-{fmt(referralDiscount)}</span>
+                  </div>
+                )}
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between items-center text-green-400 font-black">
+                    <span>Coupon ({couponResult?.coupon_percent}%)</span>
+                    <span>-{fmt(couponDiscount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center text-lg sm:text-xl font-black pt-3 sm:pt-4">

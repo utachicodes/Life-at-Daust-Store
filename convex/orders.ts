@@ -1,4 +1,5 @@
 import { query, mutation, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { verifyAdminToken } from "./auth";
 
@@ -74,6 +75,11 @@ export const addOrder = mutation({
     naboopayOrderId: v.optional(v.string()),
     naboopayCheckoutUrl: v.optional(v.string()),
     discount: v.optional(v.number()),
+    buyerUserId: v.optional(v.string()),
+    referralCode: v.optional(v.string()),
+    referralDiscount: v.optional(v.number()),
+    couponDiscount: v.optional(v.number()),
+    couponApplied: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     if (args.discount && args.discount > 0) {
