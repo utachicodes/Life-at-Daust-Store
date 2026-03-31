@@ -1,5 +1,6 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 // Convex exposes process.env at runtime. We declare it as an ambient variable
 // here to avoid requiring @types/node, since Convex is not a Node.js environment.
@@ -55,6 +56,11 @@ export const addOrder = mutation({
     paymentStorageId: v.optional(v.id("_storage")),
     naboopayOrderId: v.optional(v.string()),
     naboopayCheckoutUrl: v.optional(v.string()),
+    buyerUserId: v.optional(v.string()),
+    referralCode: v.optional(v.string()),
+    referralDiscount: v.optional(v.number()),
+    couponDiscount: v.optional(v.number()),
+    couponApplied: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const proofOfPaymentUrl = args.paymentStorageId ? (await ctx.storage.getUrl(args.paymentStorageId)) ?? undefined : undefined;
@@ -63,6 +69,7 @@ export const addOrder = mutation({
       status: args.paymentMethod === "naboopay" ? "Pending Payment" : "Pending Verification",
       proofOfPaymentUrl,
       createdAt: Date.now(),
+      referralTracked: false,
     });
 
     return orderId;
@@ -111,6 +118,22 @@ export const updateByNabooPayId = internalMutation({
       status = "Cancelled";
     }
     await ctx.db.patch(order._id, { status });
+
+    if (status === "Paid" && !order.referralTracked) {
+      await ctx.db.patch(order._id, { referralTracked: true });
+      if (order.referralCode) {
+        await ctx.runMutation(internal.referrals.trackReferral, {
+          referralCode: order.referralCode,
+          buyerUserId: order.buyerUserId,
+        });
+      }
+      if (order.couponApplied && order.buyerUserId) {
+        const buyerIdAsId = order.buyerUserId as any;
+        await ctx.runMutation(internal.referrals.redeemCoupon, {
+          userId: buyerIdAsId,
+        });
+      }
+    }
   },
 });
 
@@ -124,7 +147,24 @@ export const updateStatus = mutation({
     if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust")) {
       throw new Error("Unauthorized");
     }
+    const order = await ctx.db.get(args.id);
     await ctx.db.patch(args.id, { status: args.status });
+
+    if (args.status === "Paid" && order && !order.referralTracked) {
+      await ctx.db.patch(args.id, { referralTracked: true });
+      if (order.referralCode) {
+        await ctx.runMutation(internal.referrals.trackReferral, {
+          referralCode: order.referralCode,
+          buyerUserId: order.buyerUserId,
+        });
+      }
+      if (order.couponApplied && order.buyerUserId) {
+        const buyerIdAsId = order.buyerUserId as any;
+        await ctx.runMutation(internal.referrals.redeemCoupon, {
+          userId: buyerIdAsId,
+        });
+      }
+    }
   },
 });
 

@@ -1,12 +1,16 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
-import { Shield, ChevronLeft, Lock, Info, AlertCircle, Package, Tag } from "lucide-react";
+import { useAuth } from "../context/AuthContext.jsx";
+import { Shield, ChevronLeft, Lock, Info, AlertCircle, Package, Tag, Check, Gift, Users } from "lucide-react";
 import { formatPrice } from "../utils/format.js";
 import Button from "../components/ui/Button";
 
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+
+const QUARTER_ZIP_RE = /quarter.?zip/i;
+const isQuarterZip = (name) => QUARTER_ZIP_RE.test(name);
 
 const fmt = (n) => formatPrice(n);
 
@@ -23,6 +27,7 @@ const locations = [
 
 export default function Checkout() {
   const { items, subtotal, clear, totalSavings, logoFees } = useCart();
+  const { session } = useAuth();
   const [orderId] = useState(makeOrderId());
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", location: "" });
@@ -31,16 +36,58 @@ export default function Checkout() {
   const [error, setError] = useState("");
   const nav = useNavigate();
 
+  // Referral code state
+  const [referralInput, setReferralInput] = useState("");
+  const [appliedReferral, setAppliedReferral] = useState(null);
+  const [referralError, setReferralError] = useState("");
+  const [referralLoading, setReferralLoading] = useState(false);
+
+  // Coupon state
+  const [couponApplied, setCouponApplied] = useState(false);
+
   const addOrder = useMutation(api.orders.addOrder);
   const updateNabooPayDetails = useMutation(api.orders.updateNabooPayDetails);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const createNabooPayTransaction = useAction(api.naboopay.createTransaction);
+  const applyReferralCodeMutation = useMutation(api.referrals.applyReferralCode);
 
   const orderCount = useQuery(api.orders.getOrderCount);
+
+  const userCoupon = useQuery(
+    api.referrals.getUserCoupon,
+    session?.userId ? { userId: session.userId } : "skip"
+  );
 
   const promoApplies = orderCount !== undefined && orderCount < 10;
   const promoOrderNumber = orderCount !== undefined ? orderCount + 1 : null;
   const promoDiscount = promoApplies ? Math.round(subtotal * 0.2) : 0;
+
+  // Determine cart eligibility for referral/coupon discounts
+  const allQuarterZip = items.length > 0 && items.every((it) => isQuarterZip(it.name));
+  const hasEligibleItems = items.some((it) => !isQuarterZip(it.name));
+
+  // Referral discount (7% on eligible items)
+  const referralDiscount = appliedReferral
+    ? Math.round(
+        items
+          .filter((it) => !isQuarterZip(it.name))
+          .reduce((s, it) => s + it.price * it.qty, 0) * 0.07
+      )
+    : 0;
+
+  // Coupon discount (coupon_percent on eligible items)
+  const activeCoupon = userCoupon?.hasActiveCoupon;
+  const couponPercent = userCoupon?.coupon_percent ?? 0;
+  const couponDiscount =
+    couponApplied && activeCoupon
+      ? Math.round(
+          items
+            .filter((it) => !isQuarterZip(it.name))
+            .reduce((s, it) => s + it.price * it.qty, 0) *
+            (couponPercent / 100)
+        )
+      : 0;
+
   const discountedSubtotal = subtotal - promoDiscount;
 
   const deliveryFee = useMemo(() => {
@@ -48,7 +95,7 @@ export default function Checkout() {
     return loc ? loc.fee : 0;
   }, [form.location]);
 
-  const total = discountedSubtotal + deliveryFee + logoFees;
+  const total = discountedSubtotal - referralDiscount - couponDiscount + deliveryFee + logoFees;
 
   // Separate product sets and regular items
   const productSetItems = items.filter(item => item.isProductSet);
@@ -76,6 +123,26 @@ export default function Checkout() {
       }),
     [items]
   );
+
+  const handleApplyReferral = async () => {
+    if (!referralInput.trim()) return;
+    setReferralError("");
+    setReferralLoading(true);
+    try {
+      const result = await applyReferralCodeMutation({
+        code: referralInput.trim().toUpperCase(),
+        buyerUserId: session?.userId || undefined,
+        cartItems: items.map((it) => ({ name: it.name, price: it.price, qty: it.qty })),
+      });
+      setAppliedReferral(result);
+      setReferralError("");
+    } catch (err) {
+      setReferralError(err.message || "Invalid referral code.");
+      setAppliedReferral(null);
+    } finally {
+      setReferralLoading(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -128,9 +195,14 @@ export default function Checkout() {
         items: lines,
         subtotal,
         deliveryFee,
-        total,          // already accounts for promo discount
+        total,
         paymentMethod,
         paymentStorageId: storageId,
+        buyerUserId: session?.userId || undefined,
+        referralCode: appliedReferral ? referralInput.trim().toUpperCase() : undefined,
+        referralDiscount: referralDiscount > 0 ? referralDiscount : undefined,
+        couponDiscount: couponDiscount > 0 ? couponDiscount : undefined,
+        couponApplied: couponApplied && couponDiscount > 0 ? true : undefined,
       });
 
       // Only attempt online payment if payment method is naboopay
@@ -278,6 +350,95 @@ export default function Checkout() {
               )}
             </div>
 
+            {/* Referral Code Section */}
+            {allQuarterZip ? (
+              <div className="p-5 bg-gray-50 border border-gray-200 rounded-2xl flex items-center gap-3 text-gray-500 text-sm font-medium">
+                <Tag size={18} className="flex-shrink-0 text-gray-400" />
+                Referral discount not applicable to this item.
+              </div>
+            ) : hasEligibleItems && !appliedReferral && (
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
+                  Referral Code <span className="text-gray-300 normal-case font-medium">(optional — get 7% off)</span>
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={referralInput}
+                    onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+                    placeholder="e.g. AB3XY7KL"
+                    maxLength={12}
+                    className="flex-1 h-14 bg-white border border-gray-100 rounded-2xl px-6 text-brand-navy font-bold focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none transition-all shadow-sm font-mono tracking-widest uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyReferral}
+                    disabled={referralLoading || !referralInput.trim()}
+                    className="px-6 h-14 bg-brand-navy text-white rounded-2xl text-xs font-black uppercase tracking-wider hover:bg-brand-orange disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                  >
+                    {referralLoading ? "..." : "Apply"}
+                  </button>
+                </div>
+                {referralError && (
+                  <p className="text-red-500 text-xs font-bold ml-1">{referralError}</p>
+                )}
+              </div>
+            )}
+
+            {appliedReferral && (
+              <div className="p-5 bg-green-50 border border-green-200 rounded-2xl flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Check size={18} className="text-green-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-green-800 font-black text-sm">Referral code applied!</p>
+                    <p className="text-green-600 text-xs font-medium mt-0.5">
+                      7% off eligible items — saving {fmt(referralDiscount)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setAppliedReferral(null); setReferralInput(""); }}
+                  className="text-gray-400 hover:text-red-500 text-xs font-bold underline flex-shrink-0"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+
+            {/* Coupon Section */}
+            {session && activeCoupon && hasEligibleItems && (
+              <div className="p-5 bg-purple-50 border border-purple-200 rounded-2xl space-y-3">
+                <div className="flex items-center gap-3">
+                  <Gift size={18} className="text-purple-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-purple-800 font-black text-sm">
+                      You have a {couponPercent}% coupon available!
+                    </p>
+                    <p className="text-purple-600 text-xs font-medium mt-0.5">
+                      Applies to eligible items — saves you {fmt(
+                        Math.round(
+                          items
+                            .filter((it) => !isQuarterZip(it.name))
+                            .reduce((s, it) => s + it.price * it.qty, 0) *
+                            (couponPercent / 100)
+                        )
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={couponApplied}
+                    onChange={(e) => setCouponApplied(e.target.checked)}
+                    className="w-4 h-4 rounded accent-purple-600"
+                  />
+                  <span className="text-sm font-bold text-purple-800">Apply my {couponPercent}% coupon to this order</span>
+                </label>
+              </div>
+            )}
+
             <div className="border border-gray-200 rounded-2xl p-6 space-y-6">
               <h3 className="text-lg font-black text-brand-navy tracking-tight">Payment Method</h3>
 
@@ -416,6 +577,18 @@ export default function Checkout() {
                   <div className="flex justify-between items-center text-brand-orange">
                     <span className="flex items-center gap-1.5"><Tag size={13} /> Launch Promo (20% off)</span>
                     <span>-{fmt(promoDiscount)}</span>
+                  </div>
+                )}
+                {referralDiscount > 0 && (
+                  <div className="flex justify-between items-center text-green-400">
+                    <span className="flex items-center gap-1.5"><Users size={13} /> Referral Discount (7%)</span>
+                    <span>-{fmt(referralDiscount)}</span>
+                  </div>
+                )}
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between items-center text-purple-400">
+                    <span className="flex items-center gap-1.5"><Gift size={13} /> Your Coupon ({couponPercent}%)</span>
+                    <span>-{fmt(couponDiscount)}</span>
                   </div>
                 )}
                 {totalSavings > 0 && (

@@ -16,6 +16,16 @@ import ProductDetails from "./pages/ProductDetails.jsx";
 import OrderSuccess from "./pages/OrderSuccess.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
+import Login from "./pages/Login.jsx";
+import Signup from "./pages/Signup.jsx";
+import Account from "./pages/Account.jsx";
+import Referral from "./pages/Referral.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
+import ResetPassword from "./pages/ResetPassword.jsx";
+
+import { AuthProvider } from "./context/AuthContext.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+
 // Admin Imports
 import { AdminProvider } from "./context/AdminContext";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -33,34 +43,65 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <AdminProvider>
-        <Routes>
-          {/* Main Storefront Routes */}
-          <Route element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/collections/:slug" element={<Collection />} />
-            <Route path="/about" element={<About />} />
+      <AuthProvider>
+        <AdminProvider>
+          <Routes>
+            {/* Auth Routes (no Layout) */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/order/success/:orderId" element={<OrderSuccess />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-          </Route>
+            {/* Main Storefront Routes */}
+            <Route element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/collections/:slug" element={<Collection />} />
+              <Route path="/about" element={<About />} />
+              <Route
+                path="/referral"
+                element={
+                  <ProtectedRoute>
+                    <Referral />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="product-sets" element={<AdminProductSets />} />
-            <Route path="collections" element={<AdminCollections />} />
-            <Route path="orders" element={<AdminOrders />} />
-          </Route>
+              <Route path="/cart" element={<Cart />} />
+              <Route
+                path="/checkout"
+                element={
+                  <ProtectedRoute>
+                    <Checkout />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/account"
+                element={
+                  <ProtectedRoute>
+                    <Account />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/order/success/:orderId" element={<OrderSuccess />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+            </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AdminProvider>
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="product-sets" element={<AdminProductSets />} />
+              <Route path="collections" element={<AdminCollections />} />
+              <Route path="orders" element={<AdminOrders />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AdminProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
