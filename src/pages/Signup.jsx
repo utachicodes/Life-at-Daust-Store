@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate, Navigate } from "react-router-dom";
+import { Link, useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import { Lock, Mail, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -10,6 +10,8 @@ import logo from "../assets/logo.png";
 export default function Signup() {
   const { login, isLoggedIn } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get("ref") || "";
 
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -49,7 +51,11 @@ export default function Signup() {
         password: form.password,
       });
       login(result);
-      navigate("/account", { replace: true });
+      if (refCode) {
+        navigate(`/shop?ref=${refCode}`, { replace: true });
+      } else {
+        navigate("/account", { replace: true });
+      }
     } catch (err) {
       setError(err.data || err.message || "Sign up failed. Please try again.");
     } finally {

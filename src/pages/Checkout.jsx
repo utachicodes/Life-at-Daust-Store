@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
-import { Shield, ChevronLeft, Lock, Info, AlertCircle, Package, Tag, Check, Gift, Users } from "lucide-react";
+import { Shield, ChevronLeft, Lock, Info, AlertCircle, Package, Tag, ChevronUp } from "lucide-react";
 import { formatPrice } from "../utils/format.js";
 import Button from "../components/ui/Button";
 
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const QUARTER_ZIP_RE = /quarter.?zip/i;
 const isQuarterZip = (name) => QUARTER_ZIP_RE.test(name);
@@ -30,10 +30,14 @@ export default function Checkout() {
   const { session } = useAuth();
   const [orderId] = useState(makeOrderId());
   const [loading, setLoading] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", location: "" });
-  const [paymentMethod] = useState("naboopay");
-  const [paymentFile] = useState(null);
-  const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
+  const [error, setError] = useState(
+    searchParams.get("error") === "payment_failed"
+      ? "Your payment was not completed. Please try again."
+      : ""
+  );
   const nav = useNavigate();
 
   // Referral code state
@@ -44,58 +48,38 @@ export default function Checkout() {
 
   // Coupon state
   const [couponApplied, setCouponApplied] = useState(false);
+  const [couponResult, setCouponResult] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
 
   const addOrder = useMutation(api.orders.addOrder);
   const updateNabooPayDetails = useMutation(api.orders.updateNabooPayDetails);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const createNabooPayTransaction = useAction(api.naboopay.createTransaction);
   const applyReferralCodeMutation = useMutation(api.referrals.applyReferralCode);
+  const applyCouponMutation = useMutation(api.referrals.applyCoupon);
 
-  const orderCount = useQuery(api.orders.getOrderCount);
-
+  // Fetch user's coupon if logged in
   const userCoupon = useQuery(
     api.referrals.getUserCoupon,
     session?.userId ? { userId: session.userId } : "skip"
   );
-
-  const promoApplies = orderCount !== undefined && orderCount < 10;
-  const promoOrderNumber = orderCount !== undefined ? orderCount + 1 : null;
-  const promoDiscount = promoApplies ? Math.round(subtotal * 0.2) : 0;
-
-  // Determine cart eligibility for referral/coupon discounts
-  const allQuarterZip = items.length > 0 && items.every((it) => isQuarterZip(it.name));
-  const hasEligibleItems = items.some((it) => !isQuarterZip(it.name));
-
-  // Referral discount (7% on eligible items)
-  const referralDiscount = appliedReferral
-    ? Math.round(
-        items
-          .filter((it) => !isQuarterZip(it.name))
-          .reduce((s, it) => s + it.price * it.qty, 0) * 0.07
-      )
-    : 0;
-
-  // Coupon discount (coupon_percent on eligible items)
-  const activeCoupon = userCoupon?.hasActiveCoupon;
-  const couponPercent = userCoupon?.coupon_percent ?? 0;
-  const couponDiscount =
-    couponApplied && activeCoupon
-      ? Math.round(
-          items
-            .filter((it) => !isQuarterZip(it.name))
-            .reduce((s, it) => s + it.price * it.qty, 0) *
-            (couponPercent / 100)
-        )
-      : 0;
-
-  const discountedSubtotal = subtotal - promoDiscount;
 
   const deliveryFee = useMemo(() => {
     const loc = locations.find(l => l.name === form.location);
     return loc ? loc.fee : 0;
   }, [form.location]);
 
-  const total = discountedSubtotal - referralDiscount - couponDiscount + deliveryFee + logoFees;
+  const discountInfo = useQuery(api.orders.getDiscountEligibility, { phone: form.phone || "" });
+
+  const baseTotal = subtotal + deliveryFee + logoFees;
+  const setSubtotal = items.filter(i => i.isProductSet).reduce((s, i) => s + i.price * i.qty, 0);
+  const regularBase = baseTotal - setSubtotal;
+  const regularDiscount = discountInfo?.eligible ? Math.round(regularBase * 0.15) : 0;
+  const setDiscount = discountInfo?.eligible ? Math.round(setSubtotal * 0.05) : 0;
+  const discountAmount = regularDiscount + setDiscount;
+  const referralDiscount = appliedReferral?.discount || 0;
+  const couponDiscount = couponResult?.discount || 0;
+  const total = baseTotal - discountAmount - referralDiscount - couponDiscount;
 
   // Separate product sets and regular items
   const productSetItems = items.filter(item => item.isProductSet);
@@ -105,11 +89,13 @@ export default function Checkout() {
     () =>
       items.map((it) => {
         const line = {
+          productId: it.isProductSet ? it.productSetId : it.id,
           name: it.name,
           qty: it.qty,
           price: it.price,
         };
         if (it.selectedHoodieType) line.hoodieType = it.selectedHoodieType;
+        if (it.isCropTop) line.isCropTop = true;
         if (it.selectedColor) line.color = it.selectedColor;
         if (it.selectedSize) line.size = it.selectedSize;
         if (it.selectedFrontLogo) line.frontLogo = it.selectedFrontLogo;
@@ -144,6 +130,27 @@ export default function Checkout() {
     }
   };
 
+  const handleApplyCoupon = async () => {
+    if (!session?.userId) return;
+    setCouponError("");
+    setCouponLoading(true);
+    try {
+      const result = await applyCouponMutation({
+        userId: session.userId,
+        cartItems: items.map((it) => ({ name: it.name, price: it.price, qty: it.qty })),
+      });
+      setCouponResult(result);
+      setCouponApplied(true);
+      setCouponError("");
+    } catch (err) {
+      setCouponError(err.message || "Could not apply coupon.");
+      setCouponResult(null);
+      setCouponApplied(false);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
   if (items.length === 0) {
     return (
       <main className="max-w-7xl mx-auto px-4 py-32 text-center animate-in fade-in duration-700">
@@ -165,26 +172,8 @@ export default function Checkout() {
       return;
     }
 
-    if (paymentMethod === "manual" && !paymentFile) {
-      setError("Please upload your proof of payment screenshot to confirm the order.");
-      return;
-    }
-
     setLoading(true);
     try {
-      let storageId = undefined;
-
-      if (paymentMethod === "manual") {
-        const postUrl = await generateUploadUrl();
-        const result = await fetch(postUrl, {
-          method: "POST",
-          headers: { "Content-Type": paymentFile.type },
-          body: paymentFile,
-        });
-        const uploadResult = await result.json();
-        storageId = uploadResult.storageId;
-      }
-
       await addOrder({
         orderId,
         customer: {
@@ -196,63 +185,73 @@ export default function Checkout() {
         subtotal,
         deliveryFee,
         total,
-        paymentMethod,
-        paymentStorageId: storageId,
-        buyerUserId: session?.userId || undefined,
-        referralCode: appliedReferral?.code,
-        referralDiscount: referralDiscount > 0 ? referralDiscount : undefined,
-        couponDiscount: couponDiscount > 0 ? couponDiscount : undefined,
-        couponApplied: couponApplied && couponDiscount > 0 ? true : undefined,
+        paymentMethod: "naboopay",
+        ...(discountAmount > 0 ? { discount: discountAmount } : {}),
+        ...(session?.userId ? { buyerUserId: session.userId } : {}),
+        ...(appliedReferral ? { referralCode: appliedReferral.code || referralInput.trim().toUpperCase(), referralDiscount } : {}),
+        ...(couponApplied ? { couponApplied: true, couponDiscount } : {}),
       });
 
-      // Only attempt online payment if payment method is naboopay
-      if (paymentMethod === "naboopay") {
-        try {
-          const nabooResponse = await createNabooPayTransaction({
+      // Create NabooPay transaction
+      try {
+        const nabooResponse = await createNabooPayTransaction({
             orderId,
             customer: {
               name: form.name,
-              phone: form.phone.startsWith("+") ? form.phone : `+221${form.phone.replace(/\s/g, "")}`,
+              phone: form.phone.startsWith("+")
+                ? form.phone.replace(/\s/g, "")
+                : `+221${form.phone.replace(/\s/g, "")}`,
             },
-            items: (() => {
-              const totalDiscount = promoDiscount + referralDiscount + couponDiscount;
-              const nabooItems = lines.map(it => ({ name: it.name, qty: it.qty, price: it.price }));
-              if (logoFees > 0) nabooItems.push({ name: "Logo Customization", qty: 1, price: logoFees });
-              if (totalDiscount > 0) nabooItems.push({ name: "Discount", qty: 1, price: -totalDiscount });
-              return nabooItems;
-            })(),
+            items: [
+              ...lines.map(it => ({
+                name: it.name,
+                qty: it.qty,
+                price: it.price,
+              })),
+              ...(discountAmount > 0 ? [{
+                name: "Early Customer Discount (-15%)",
+                qty: 1,
+                price: -discountAmount,
+              }] : []),
+              ...(referralDiscount > 0 ? [{
+                name: "Referral Discount (-7%)",
+                qty: 1,
+                price: -referralDiscount,
+              }] : []),
+              ...(couponDiscount > 0 ? [{
+                name: `Coupon Discount (-${couponResult?.coupon_percent}%)`,
+                qty: 1,
+                price: -couponDiscount,
+              }] : []),
+            ],
             successUrl: `https://shop.daustgov.com/order/success/${orderId}`,
             errorUrl: `https://shop.daustgov.com/checkout?error=payment_failed`,
           });
 
-          if (nabooResponse && nabooResponse.checkout_url) {
-            await updateNabooPayDetails({
-              orderId,
-              naboopayOrderId: nabooResponse.order_id,
-              naboopayCheckoutUrl: nabooResponse.checkout_url,
-            });
-            window.location.href = nabooResponse.checkout_url;
-            return;
-          } else {
-            throw new Error("Failed to get checkout URL from NabooPay");
-          }
-        } catch (nabooErr) {
-          // Handle payment service errors gracefully - don't expose internal errors to users
-          const errorMessage = nabooErr.message || "";
-          if (errorMessage.includes("NABOOPAY_TOKEN") ||
-            errorMessage.includes("not set") ||
-            errorMessage.includes("environment") ||
-            errorMessage.includes("API")) {
-            setError("Online payment is temporarily unavailable. Please use manual payment method instead.");
-            setLoading(false);
-            return;
-          }
-          throw nabooErr;
+        if (nabooResponse && nabooResponse.checkout_url) {
+          await updateNabooPayDetails({
+            orderId,
+            naboopayOrderId: nabooResponse.order_id,
+            naboopayCheckoutUrl: nabooResponse.checkout_url,
+          });
+          window.location.href = nabooResponse.checkout_url;
+          return;
+        } else {
+          throw new Error("Failed to get checkout URL from NabooPay");
         }
+      } catch (nabooErr) {
+        // Handle payment service errors gracefully - don't expose internal errors to users
+        const errorMessage = nabooErr.message || "";
+        if (errorMessage.includes("NABOOPAY_TOKEN") ||
+          errorMessage.includes("not set") ||
+          errorMessage.includes("environment") ||
+          errorMessage.includes("API")) {
+          setError("Online payment is temporarily unavailable. Please contact support.");
+          setLoading(false);
+          return;
+        }
+        throw nabooErr;
       }
-
-      clear();
-      nav(`/order/success/${orderId}`, { state: { orderId, paymentMethod: "manual" } });
     } catch {
       setError("Could not secure the transaction. Check your internet or try again.");
     } finally {
@@ -261,48 +260,56 @@ export default function Checkout() {
   };
 
   return (
-    <div className="bg-gray-50/50 min-h-screen pb-24 sm:pb-32 overflow-x-hidden">
-      <div className="bg-white border-b border-gray-100 mb-12 sm:mb-20">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-          <Link to="/cart" className="flex items-center gap-2 text-gray-400 hover:text-brand-orange text-[10px] font-black uppercase tracking-[0.2em] transition-colors">
+    <div className="bg-gray-50/50 min-h-screen pb-32 sm:pb-32 lg:pb-24 overflow-x-hidden">
+      <div className="bg-white border-b border-gray-100 mb-8 sm:mb-12 lg:mb-20">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 flex justify-between items-center">
+          <Link to="/cart" className="flex items-center gap-2 text-gray-400 hover:text-brand-orange active:text-brand-orange text-[10px] font-black uppercase tracking-[0.2em] transition-colors">
             <ChevronLeft size={14} /> Back to Bag
           </Link>
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
-            <Lock size={12} className="text-green-500" /> Secure Checkout
+            <Lock size={12} className="text-green-500" /> Secure
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 grid gap-16 lg:grid-cols-12 items-start">
+      <main className={`max-w-7xl mx-auto px-4 grid gap-12 sm:gap-16 lg:grid-cols-12 items-start lg:pb-0 transition-all duration-300 ${summaryOpen ? "pb-[550px]" : "pb-28"}`}>
         <div className="lg:col-span-7 animate-in slide-in-from-left-5 duration-700">
-          <h1 className="text-[var(--text-4xl)] font-black text-brand-navy tracking-tighter mb-4">Complete Your Order</h1>
-          <p className="text-gray-500 mb-12 text-lg">Enter your details to finalize your university essentials.</p>
+          <h1 className="text-3xl sm:text-[var(--text-4xl)] font-black text-brand-navy tracking-tighter mb-3 sm:mb-4">Complete Your Order</h1>
+          <p className="text-gray-500 mb-8 sm:mb-12 text-base sm:text-lg">Enter your details to finalize your university essentials.</p>
 
-          {promoApplies && (
-            <div className="mb-10 p-5 bg-brand-orange/10 border border-brand-orange/30 rounded-2xl flex items-center gap-4 animate-in bounce-in duration-500">
-              <Tag size={20} className="flex-shrink-0 text-brand-orange" />
+
+          {error && (
+            <div className="mb-8 sm:mb-10 p-4 sm:p-5 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 sm:gap-4 text-red-700 text-xs sm:text-sm font-bold animate-in bounce-in duration-500">
+              <AlertCircle size={20} className="flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {discountInfo?.eligible && (
+            <div className="mb-8 sm:mb-10 p-4 sm:p-5 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3 sm:gap-4 animate-in slide-in-from-top-3 duration-500">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Tag size={18} className="text-green-600" />
+              </div>
               <div>
-                <p className="text-brand-orange font-black text-sm">Launch Special! You're order #{promoOrderNumber} — 20% off your entire order!</p>
-                <p className="text-brand-orange/70 text-xs font-medium mt-0.5">This exclusive discount applies to the first 10 orders only.</p>
+                <p className="font-black text-sm text-green-800 uppercase tracking-wide">Early Customer Discount Applied!</p>
+                <p className="text-xs text-green-600 font-medium mt-0.5">
+                  You save {fmt(discountAmount)} on this order.
+                  {discountInfo?.slotsRemaining <= 3 && (
+                    <span className="ml-1 font-black text-brand-orange">Only {discountInfo.slotsRemaining} spot{discountInfo.slotsRemaining !== 1 ? "s" : ""} left!</span>
+                  )}
+                </p>
               </div>
             </div>
           )}
 
-          {error && (
-            <div className="mb-10 p-5 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-4 text-red-700 text-sm font-bold animate-in bounce-in duration-500">
-              <AlertCircle size={20} className="flex-shrink-0" />
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={submit} className="space-y-8">
-            <div className="grid gap-8 sm:grid-cols-2">
+          <form onSubmit={submit} className="space-y-6 sm:space-y-8">
+            <div className="grid gap-6 sm:gap-8 sm:grid-cols-2">
               <div className="space-y-3">
                 <label htmlFor="name" className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Full Name</label>
                 <input
                   id="name"
                   required
-                  className="w-full h-16 bg-white border border-gray-100 rounded-2xl px-6 text-brand-navy font-bold focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none transition-all shadow-sm"
+                  className="w-full h-14 sm:h-16 bg-white border border-gray-100 rounded-2xl px-5 sm:px-6 text-brand-navy font-bold text-sm sm:text-base focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none transition-all shadow-sm"
                   placeholder="e.g. Moussa Diop"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -314,12 +321,13 @@ export default function Checkout() {
                 <input
                   id="phone"
                   required
-                  className="w-full h-16 bg-white border border-gray-100 rounded-2xl px-6 text-brand-navy font-bold focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none transition-all shadow-sm"
-                  placeholder="e.g. 77 123 45 67"
+                  className="w-full h-14 sm:h-16 bg-white border border-gray-100 rounded-2xl px-5 sm:px-6 text-brand-navy font-bold text-sm sm:text-base focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none transition-all shadow-sm"
+                  placeholder="e.g. +221 77 123 45 67"
                   type="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
+                <p className="text-[10px] text-gray-500 ml-1 italic font-medium">Country code will be added if not included</p>
               </div>
             </div>
 
@@ -329,7 +337,7 @@ export default function Checkout() {
                 <select
                   id="location"
                   required
-                  className="w-full h-16 bg-white border border-gray-100 rounded-2xl px-6 text-brand-navy font-bold focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none appearance-none transition-all cursor-pointer shadow-sm"
+                  className="w-full h-14 sm:h-16 bg-white border border-gray-100 rounded-2xl px-5 sm:px-6 text-brand-navy font-bold text-sm sm:text-base focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none appearance-none transition-all cursor-pointer shadow-sm"
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}
                 >
@@ -340,7 +348,7 @@ export default function Checkout() {
                     </option>
                   ))}
                 </select>
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                <div className="absolute right-5 sm:right-6 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   <ChevronLeft className="rotate-[-90deg]" size={18} />
                 </div>
               </div>
@@ -352,110 +360,76 @@ export default function Checkout() {
               )}
             </div>
 
-            {/* Referral Code Section */}
-            {allQuarterZip ? (
-              <div className="p-5 bg-gray-50 border border-gray-200 rounded-2xl flex items-center gap-3 text-gray-500 text-sm font-medium">
-                <Tag size={18} className="flex-shrink-0 text-gray-400" />
-                Referral discount not applicable to this item.
-              </div>
-            ) : promoApplies ? (
-              <div className="p-5 bg-gray-50 border border-gray-200 rounded-2xl flex items-center gap-3 text-gray-500 text-sm font-medium">
-                <Tag size={18} className="flex-shrink-0 text-gray-400" />
-                Referral codes cannot be combined with the launch promo discount.
-              </div>
-            ) : hasEligibleItems && !appliedReferral && (
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
-                  Referral Code <span className="text-gray-300 normal-case font-medium">(optional — get 7% off)</span>
-                </label>
+            {/* Referral Code */}
+            <div className="border border-gray-200 rounded-2xl p-5 sm:p-6 space-y-4">
+              <h3 className="text-sm font-black text-brand-navy uppercase tracking-wider">Referral Code</h3>
+              {!session ? (
+                <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs text-gray-500 font-medium">Have a referral code? Sign in to use it.</p>
+                  <Link to="/login" state={{ from: { pathname: "/checkout" } }} className="text-xs font-black text-brand-orange hover:underline">
+                    Sign in
+                  </Link>
+                </div>
+              ) : appliedReferral ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-green-800">Code applied: {referralInput.toUpperCase()}</p>
+                    <p className="text-[10px] text-green-600 mt-0.5">You save {fmt(referralDiscount)} (7% off eligible items)</p>
+                  </div>
+                  <button type="button" onClick={() => { setAppliedReferral(null); setReferralInput(""); }} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Remove</button>
+                </div>
+              ) : (
                 <div className="flex gap-3">
                   <input
                     type="text"
                     value={referralInput}
-                    onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-                    placeholder="e.g. AB3XY7KL"
-                    maxLength={12}
-                    className="flex-1 h-14 bg-white border border-gray-100 rounded-2xl px-6 text-brand-navy font-bold focus:ring-4 focus:ring-brand-orange/5 focus:border-brand-orange outline-none transition-all shadow-sm font-mono tracking-widest uppercase"
+                    onChange={(e) => setReferralInput(e.target.value)}
+                    placeholder="Enter referral code"
+                    className="flex-1 h-12 bg-white border border-gray-100 rounded-xl px-4 text-brand-navy font-bold text-sm focus:ring-2 focus:ring-brand-orange/10 focus:border-brand-orange outline-none transition-all"
                   />
-                  <button
-                    type="button"
-                    onClick={handleApplyReferral}
-                    disabled={referralLoading || !referralInput.trim()}
-                    className="px-6 h-14 bg-brand-navy text-white rounded-2xl text-xs font-black uppercase tracking-wider hover:bg-brand-orange disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-                  >
-                    {referralLoading ? "..." : "Apply"}
-                  </button>
+                  <Button type="button" onClick={handleApplyReferral} loading={referralLoading} className="h-12 px-5 !text-xs !rounded-xl">
+                    Apply
+                  </Button>
                 </div>
-                {referralError && (
-                  <p className="text-red-500 text-xs font-bold ml-1">{referralError}</p>
-                )}
-              </div>
-            )}
+              )}
+              {referralError && <p className="text-xs text-red-500 font-bold">{referralError}</p>}
+            </div>
 
-            {appliedReferral && (
-              <div className="p-5 bg-green-50 border border-green-200 rounded-2xl flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <Check size={18} className="text-green-600 flex-shrink-0" />
+            {/* Coupon */}
+            {session && userCoupon?.hasActiveCoupon && !couponApplied && (
+              <div className="border border-green-200 bg-green-50 rounded-2xl p-5 sm:p-6 space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-800 font-black text-sm">Referral code applied!</p>
-                    <p className="text-green-600 text-xs font-medium mt-0.5">
-                      7% off eligible items — saving {fmt(referralDiscount)}
-                    </p>
+                    <h3 className="text-sm font-black text-green-800 uppercase tracking-wider">Referral Coupon Available</h3>
+                    <p className="text-xs text-green-600 mt-1">You have a {userCoupon.coupon_percent}% coupon from referrals!</p>
                   </div>
+                  <Button type="button" onClick={handleApplyCoupon} loading={couponLoading} className="h-10 px-5 !text-xs !rounded-xl">
+                    Use Coupon
+                  </Button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => { setAppliedReferral(null); setReferralInput(""); }}
-                  className="text-gray-400 hover:text-red-500 text-xs font-bold underline flex-shrink-0"
-                >
-                  Remove
-                </button>
+                {couponError && <p className="text-xs text-red-500 font-bold">{couponError}</p>}
+              </div>
+            )}
+            {couponApplied && couponResult && (
+              <div className="border border-green-200 bg-green-50 rounded-2xl p-5 sm:p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-black text-green-800">Coupon applied: {couponResult.coupon_percent}% off</p>
+                  <p className="text-[10px] text-green-600 mt-0.5">You save {fmt(couponDiscount)} on eligible items</p>
+                </div>
+                <button type="button" onClick={() => { setCouponApplied(false); setCouponResult(null); }} className="text-xs font-bold text-gray-400 hover:text-red-500 transition-colors">Remove</button>
               </div>
             )}
 
-            {/* Coupon Section */}
-            {session && activeCoupon && hasEligibleItems && (
-              <div className="p-5 bg-purple-50 border border-purple-200 rounded-2xl space-y-3">
-                <div className="flex items-center gap-3">
-                  <Gift size={18} className="text-purple-600 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-purple-800 font-black text-sm">
-                      You have a {couponPercent}% coupon available!
-                    </p>
-                    <p className="text-purple-600 text-xs font-medium mt-0.5">
-                      Applies to eligible items — saves you {fmt(
-                        Math.round(
-                          items
-                            .filter((it) => !isQuarterZip(it.name))
-                            .reduce((s, it) => s + it.price * it.qty, 0) *
-                            (couponPercent / 100)
-                        )
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={couponApplied}
-                    onChange={(e) => setCouponApplied(e.target.checked)}
-                    className="w-4 h-4 rounded accent-purple-600"
-                  />
-                  <span className="text-sm font-bold text-purple-800">Apply my {couponPercent}% coupon to this order</span>
-                </label>
-              </div>
-            )}
+            <div className="border border-gray-200 rounded-2xl p-5 sm:p-6 space-y-5 sm:space-y-6">
+              <h3 className="text-base sm:text-lg font-black text-brand-navy tracking-tight">Payment Method</h3>
 
-            <div className="border border-gray-200 rounded-2xl p-6 space-y-6">
-              <h3 className="text-lg font-black text-brand-navy tracking-tight">Payment Method</h3>
-
-              <div className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-brand-orange bg-brand-orange/5">
+              <div className="flex flex-col items-center justify-center p-5 sm:p-6 rounded-xl border-2 border-brand-orange bg-brand-orange/5">
                 <Shield size={24} className="text-brand-orange" />
-                <span className="font-bold mt-2 text-brand-navy">Online Payment</span>
+                <span className="font-bold mt-2 text-brand-navy text-sm sm:text-base">Online Payment</span>
                 <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Wave, Orange Money</p>
               </div>
 
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 sm:p-4 flex gap-3">
                 <Info size={18} className="text-blue-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-700 leading-relaxed font-medium">
                   You will be redirected to NabooPay's secure portal to complete your payment using Wave or Orange Money.
@@ -463,12 +437,12 @@ export default function Checkout() {
               </div>
             </div>
 
-            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm mt-12 space-y-6">
-              <div className="flex items-center gap-4 text-brand-navy">
-                <Shield size={22} className="text-green-500" />
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 border border-gray-100 shadow-sm mt-8 sm:mt-12 space-y-6">
+              <div className="flex items-center gap-3 sm:gap-4 text-brand-navy">
+                <Shield size={20} className="sm:w-[22px] sm:h-[22px] text-green-500 flex-shrink-0" />
                 <div>
-                  <p className="font-black text-sm uppercase tracking-wider">Campus Purchase Guarantee</p>
-                  <p className="text-xs text-gray-500 mt-1">Direct from the University Shop. Verified & Secured.</p>
+                  <p className="font-black text-xs sm:text-sm uppercase tracking-wider">Campus Purchase Guarantee</p>
+                  <p className="text-[11px] sm:text-xs text-gray-500 mt-1">Direct from the University Shop. Verified & Secured.</p>
                 </div>
               </div>
             </div>
@@ -476,19 +450,40 @@ export default function Checkout() {
             <Button
               type="submit"
               loading={loading}
-              className="w-full h-20 rounded-[1.5rem] !text-lg shadow-2xl shadow-brand-orange/20 mt-8"
+              className="w-full h-16 sm:h-20 rounded-2xl sm:rounded-[1.5rem] !text-base sm:!text-lg shadow-2xl shadow-brand-orange/20 mt-6 sm:mt-8 font-bold active:scale-[0.98]"
             >
-              {paymentMethod === "naboopay" ? "Proceed to Payment" : "Confirm Order"}
+              Proceed to Payment
             </Button>
           </form>
         </div>
 
-        <aside className="lg:col-span-5 h-fit animate-in slide-in-from-right-5 duration-700 delay-100">
-          <div className="bg-brand-navy rounded-[2.5rem] p-10 text-white shadow-2xl shadow-brand-navy/40 relative overflow-hidden">
+        <aside className="lg:col-span-5 h-fit animate-in slide-in-from-right-5 duration-700 delay-100 fixed lg:relative bottom-0 left-0 right-0 lg:bottom-auto z-50">
+          <div className="bg-brand-navy rounded-t-3xl lg:rounded-[2.5rem] text-white shadow-2xl shadow-brand-navy/40 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" />
 
-            <div className="relative z-10">
-              <h2 className="text-xl font-black tracking-tight mb-8">Review Selection</h2>
+            {/* Mobile toggle bar */}
+            <div className="lg:hidden flex items-center justify-between px-5 py-4 relative z-10">
+              <button
+                onClick={() => setSummaryOpen(s => !s)}
+                className="flex items-center gap-2 flex-1"
+                aria-expanded={summaryOpen}
+                aria-label={summaryOpen ? "Collapse order summary" : "Expand order summary"}
+              >
+                <ChevronUp
+                  size={20}
+                  className={`text-brand-orange transition-transform duration-300 ${summaryOpen ? "" : "rotate-180"}`}
+                />
+                <span className="font-black text-sm">Order Summary</span>
+              </button>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase tracking-widest text-brand-orange">Total</p>
+                <p className="text-lg font-black">{fmt(total)}</p>
+              </div>
+            </div>
+
+            {/* Collapsible body */}
+            <div className={`${summaryOpen ? "block" : "hidden"} lg:block p-6 sm:p-8 lg:p-10 pt-0 lg:pt-10 overflow-y-auto max-h-[calc(85vh-64px)] lg:max-h-none relative z-10`}>
+              <h2 className="text-lg sm:text-xl font-black tracking-tight mb-6 sm:mb-8 hidden lg:block">Review Selection</h2>
 
               {/* Product Sets Section */}
               {productSetItems.length > 0 && (
@@ -575,29 +570,18 @@ export default function Checkout() {
                 </div>
               )}
 
-              <div className="space-y-4 text-sm font-medium border-t border-white/10 pt-6 mt-6">
+              {discountInfo?.eligible && (
+                <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2 mb-4">
+                  <Tag size={14} className="text-green-400 flex-shrink-0" />
+                  <p className="text-[11px] font-black text-green-400 uppercase tracking-wider">Early Customer Discount Applied!</p>
+                </div>
+              )}
+
+              <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm font-medium border-t border-white/10 pt-5 sm:pt-6 mt-5 sm:mt-6">
                 <div className="flex justify-between items-center text-brand-cream/60">
                   <span>Subtotal</span>
                   <span>{fmt(subtotal)}</span>
                 </div>
-                {promoApplies && (
-                  <div className="flex justify-between items-center text-brand-orange">
-                    <span className="flex items-center gap-1.5"><Tag size={13} /> Launch Promo (20% off)</span>
-                    <span>-{fmt(promoDiscount)}</span>
-                  </div>
-                )}
-                {referralDiscount > 0 && (
-                  <div className="flex justify-between items-center text-green-400">
-                    <span className="flex items-center gap-1.5"><Users size={13} /> Referral Discount (7%)</span>
-                    <span>-{fmt(referralDiscount)}</span>
-                  </div>
-                )}
-                {couponDiscount > 0 && (
-                  <div className="flex justify-between items-center text-purple-400">
-                    <span className="flex items-center gap-1.5"><Gift size={13} /> Your Coupon ({couponPercent}%)</span>
-                    <span>-{fmt(couponDiscount)}</span>
-                  </div>
-                )}
                 {totalSavings > 0 && (
                   <div className="flex justify-between items-center text-green-400">
                     <span>Bundle Savings</span>
@@ -612,15 +596,39 @@ export default function Checkout() {
                 )}
                 <div className="flex justify-between items-center text-brand-cream/60">
                   <span>Shipping</span>
-                  <span className="text-brand-orange uppercase text-xs font-black tracking-widest">Complimentary</span>
+                  <span className="text-brand-orange uppercase text-[10px] font-black tracking-widest">Free</span>
                 </div>
-<div className="flex justify-between items-center text-xl font-black pt-4">
+                {discountInfo?.eligible && regularBase > 0 && (
+                  <div className="flex justify-between items-center text-green-400 font-black">
+                    <span>15% Discount</span>
+                    <span>-{fmt(regularDiscount)}</span>
+                  </div>
+                )}
+                {discountInfo?.eligible && setSubtotal > 0 && (
+                  <div className="flex justify-between items-center text-green-400 font-black">
+                    <span>5% Discount (Bundles)</span>
+                    <span>-{fmt(setDiscount)}</span>
+                  </div>
+                )}
+                {referralDiscount > 0 && (
+                  <div className="flex justify-between items-center text-green-400 font-black">
+                    <span>Referral Discount (7%)</span>
+                    <span>-{fmt(referralDiscount)}</span>
+                  </div>
+                )}
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between items-center text-green-400 font-black">
+                    <span>Coupon ({couponResult?.coupon_percent}%)</span>
+                    <span>-{fmt(couponDiscount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-lg sm:text-xl font-black pt-3 sm:pt-4">
                   <span>Final Total</span>
                   <span className="text-brand-orange">{fmt(total)}</span>
                 </div>
               </div>
 
-              <div className="bg-white/5 rounded-2xl p-6 flex flex-col items-center gap-4 border border-white/5 mt-8">
+              <div className="bg-white/5 rounded-2xl p-4 sm:p-6 flex flex-col items-center gap-3 sm:gap-4 border border-white/5 mt-6 sm:mt-8 lg:block hidden">
                 <div className="flex items-center gap-2 text-brand-cream/40 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest">
                   <Lock size={12} /> Encrypted Transaction
                 </div>

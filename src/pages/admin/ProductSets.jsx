@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { Plus, Package, Edit2, Trash2, Eye, EyeOff, Tag } from "lucide-react";
+import { Plus, Package, Edit2, Trash2, Eye, EyeOff, Tag, TrendingUp } from "lucide-react";
 import Button from "../../components/ui/Button";
 import { formatPrice } from "../../utils/format";
 import ProductSetForm from "./ProductSetForm";
@@ -158,6 +158,24 @@ export default function ProductSets() {
                                                     Save {formatPrice(set.savings)}
                                                 </span>
                                             </>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-3 text-sm mt-2">
+                                        <span className="font-bold text-gray-400">
+                                            Cost: {formatPrice(set.costOfGoods ?? 0)}
+                                        </span>
+                                        <span className="text-gray-300">|</span>
+                                        <span className={`font-black flex items-center gap-1 ${(set.netProfit ?? set.specialPrice) >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                                            <TrendingUp size={14} />
+                                            Profit: {formatPrice(set.netProfit ?? set.specialPrice)}
+                                            <span className="font-bold text-xs opacity-70">
+                                                ({set.specialPrice > 0 ? Math.round(((set.netProfit ?? set.specialPrice) / set.specialPrice) * 100) : 0}% margin)
+                                            </span>
+                                        </span>
+                                        {!set.hasBuyingPrices && (
+                                            <span className="text-[10px] text-amber-500 font-bold italic">
+                                                (buying prices not set)
+                                            </span>
                                         )}
                                     </div>
                                 </div>

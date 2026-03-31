@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import {
     LayoutDashboard,
     Package,
@@ -9,26 +11,32 @@ import {
     Menu,
     ExternalLink,
     Layers,
-    Tag
+    Tag,
+    Image
 } from "lucide-react";
 import logo from "../../assets/logo.png";
 
 export default function AdminLayout() {
-    const { isAdmin, logout } = useAdmin();
+    const { isAdmin, logout, adminToken, adminRole } = useAdmin();
+    const isPartner = adminRole === "partner";
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
+    const orders = useQuery(api.orders.list, adminToken ? { adminToken } : "skip");
+    const pendingCount = orders?.filter(o => o.status === "Pending Verification" || o.status === "Pending Payment").length ?? 0;
 
     if (!isAdmin) {
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
-    const menuItems = [
-        { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-        { icon: Package, label: "Products", path: "/admin/products" },
-        { icon: Tag, label: "Bundles", path: "/admin/product-sets" },
-        { icon: Layers, label: "Collections", path: "/admin/collections" },
-        { icon: ShoppingBag, label: "Orders", path: "/admin/orders" },
+    const allMenuItems = [
+        { icon: LayoutDashboard, label: "Dashboard", path: "/admin", managerOnly: true },
+        { icon: Package, label: "Products", path: "/admin/products", managerOnly: true },
+        { icon: Tag, label: "Bundles", path: "/admin/product-sets", managerOnly: true },
+        { icon: Layers, label: "Collections", path: "/admin/collections", managerOnly: true },
+        { icon: ShoppingBag, label: "Orders", path: "/admin/orders", managerOnly: false },
+        { icon: Image, label: "Hero", path: "/admin/hero", managerOnly: true },
     ];
+    const menuItems = isPartner ? allMenuItems.filter(i => !i.managerOnly) : allMenuItems;
 
     return (
         <div className="flex h-screen bg-white overflow-hidden">
@@ -56,7 +64,7 @@ export default function AdminLayout() {
                         />
                         {isSidebarOpen && (
                             <div className="flex flex-col whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
-                                <span className="font-[900] text-[11px] tracking-[0.2em] uppercase leading-none mb-1">Store Admin</span>
+                                <span className="font-[900] text-[11px] tracking-[0.2em] uppercase leading-none mb-1">{isPartner ? "Partner Portal" : "Store Admin"}</span>
                                 <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Life at DAUST</span>
                             </div>
                         )}
@@ -84,13 +92,25 @@ export default function AdminLayout() {
                                         : "text-white/40 hover:text-white hover:bg-white/5"
                                     }`}
                             >
-                                <Icon
-                                    size={20}
-                                    className={`flex-shrink-0 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`}
-                                />
+                                <div className="relative flex-shrink-0">
+                                    <Icon
+                                        size={20}
+                                        className={`transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`}
+                                    />
+                                    {item.path === "/admin/orders" && pendingCount > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center">
+                                            {pendingCount > 9 ? "9+" : pendingCount}
+                                        </span>
+                                    )}
+                                </div>
                                 {isSidebarOpen && (
-                                    <span className="text-xs font-[800] uppercase tracking-widest whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
+                                    <span className="text-xs font-[800] uppercase tracking-widest whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300 flex-1">
                                         {item.label}
+                                    </span>
+                                )}
+                                {isSidebarOpen && item.path === "/admin/orders" && pendingCount > 0 && (
+                                    <span className="text-[9px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
+                                        {pendingCount}
                                     </span>
                                 )}
                                 {!isSidebarOpen && isActive && (
@@ -143,15 +163,24 @@ export default function AdminLayout() {
                             <Menu size={20} />
                         </button>
                         <h1 className="text-base lg:text-xl font-[900] text-brand-navy tracking-tight">
-                            {menuItems.find(item => item.path === location.pathname)?.label || "Admin Panel"}
+                            {menuItems.find(item => location.pathname.startsWith(item.path) && (item.path !== "/admin" || location.pathname === "/admin"))?.label || "Admin Panel"}
                         </h1>
                     </div>
 
                     <div className="flex items-center gap-3 lg:gap-6">
                         <div className="flex flex-col items-end mr-1 lg:mr-2 hidden sm:flex">
-                            <span className="text-xs font-black text-brand-navy uppercase tracking-widest leading-none mb-1">System Admin</span>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Authorized Session</span>
+                            <span className="text-xs font-black text-brand-navy uppercase tracking-widest leading-none mb-1">{isPartner ? "Uniwear Partner" : "System Admin"}</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{isPartner ? "Partner Access" : "Authorized Session"}</span>
                         </div>
+                        {isPartner && (
+                            <button
+                                onClick={logout}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 border border-red-200 font-bold text-xs uppercase tracking-widest transition-all"
+                            >
+                                <LogOut size={14} />
+                                <span className="hidden sm:inline">Sign Out</span>
+                            </button>
+                        )}
                         <div className="w-10 lg:w-12 h-10 lg:h-12 rounded-xl lg:rounded-2xl bg-brand-navy shadow-lg shadow-brand-navy/20 flex items-center justify-center group cursor-pointer hover:bg-brand-orange transition-all duration-500 overflow-hidden relative">
                             <span className="text-white font-[900] text-base lg:text-lg relative z-10 transition-transform group-hover:scale-110">A</span>
                             <div className="absolute inset-0 bg-brand-orange translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
