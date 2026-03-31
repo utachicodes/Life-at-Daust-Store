@@ -43,9 +43,12 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function verifyPassword(password: string, stored: string): Promise<boolean> {
+    try {
     const [saltHex, storedHash] = stored.split(":");
     if (!saltHex || !storedHash) return false;
-    const saltBytes = saltHex.match(/.{2}/g)!.map((b) => parseInt(b, 16));
+    const saltMatches = saltHex.match(/.{2}/g);
+    if (!saltMatches) return false;
+    const saltBytes = saltMatches.map((b) => parseInt(b, 16));
     const salt = new Uint8Array(saltBytes);
     const encoder = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
@@ -70,6 +73,9 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
         diff |= hashHex.charCodeAt(i) ^ storedHash.charCodeAt(i);
     }
     return diff === 0;
+    } catch {
+        return false;
+    }
 }
 
 function generateReferralCode(): string {
@@ -168,6 +174,10 @@ export const loginUser = mutation({
         if (user.lockedUntil && user.lockedUntil > now) {
             const minutesLeft = Math.ceil((user.lockedUntil - now) / 60000);
             throw new Error(`Account temporarily locked. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.`);
+        }
+
+        if (typeof user.passwordHash !== "string" || !user.passwordHash.includes(":")) {
+            throw new Error("This account needs a password reset before you can sign in.");
         }
 
         const valid = await verifyPassword(args.password, user.passwordHash);
