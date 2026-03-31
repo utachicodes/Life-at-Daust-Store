@@ -1,5 +1,5 @@
 import { mutation, query, action } from "./_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { api } from "./_generated/api";
 
 declare const process: { env: Record<string, string | undefined> };
@@ -104,20 +104,20 @@ export const createUser = mutation({
         const name = args.name.trim();
 
         if (!EMAIL_RE.test(email)) {
-            throw new Error("Please enter a valid email address.");
+            throw new ConvexError("Please enter a valid email address.");
         }
         if (name.length < 2 || name.length > 80) {
-            throw new Error("Name must be between 2 and 80 characters.");
+            throw new ConvexError("Name must be between 2 and 80 characters.");
         }
         const pwError = validatePasswordStrength(args.password);
-        if (pwError) throw new Error(pwError);
+        if (pwError) throw new ConvexError(pwError);
 
         const existing = await ctx.db
             .query("users")
             .withIndex("by_email", (q) => q.eq("email", email))
             .first();
         if (existing) {
-            throw new Error("An account with this email already exists.");
+            throw new ConvexError("An account with this email already exists.");
         }
 
         const passwordHash = await hashPassword(args.password);
@@ -155,7 +155,7 @@ export const loginUser = mutation({
         const email = args.email.trim().toLowerCase();
 
         if (!EMAIL_RE.test(email)) {
-            throw new Error("Invalid email or password.");
+            throw new ConvexError("Invalid email or password.");
         }
 
         const user = await ctx.db
@@ -166,18 +166,18 @@ export const loginUser = mutation({
         // Always perform timing-equivalent work to prevent user enumeration
         if (!user) {
             await hashPassword("dummy-timing-password");
-            throw new Error("Invalid email or password.");
+            throw new ConvexError("Invalid email or password.");
         }
 
         // Lockout check
         const now = Date.now();
         if (user.lockedUntil && user.lockedUntil > now) {
             const minutesLeft = Math.ceil((user.lockedUntil - now) / 60000);
-            throw new Error(`Account temporarily locked. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.`);
+            throw new ConvexError(`Account temporarily locked. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.`);
         }
 
         if (typeof user.passwordHash !== "string" || !user.passwordHash.includes(":")) {
-            throw new Error("This account needs a password reset before you can sign in.");
+            throw new ConvexError("This account needs a password reset before you can sign in.");
         }
 
         const valid = await verifyPassword(args.password, user.passwordHash);
@@ -192,9 +192,9 @@ export const loginUser = mutation({
             await ctx.db.patch(user._id, patch as any);
             const remaining = MAX_LOGIN_ATTEMPTS - attempts;
             if (remaining <= 0) {
-                throw new Error(`Too many failed attempts. Account locked for 15 minutes.`);
+                throw new ConvexError(`Too many failed attempts. Account locked for 15 minutes.`);
             }
-            throw new Error(`Invalid email or password. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`);
+            throw new ConvexError(`Invalid email or password. ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`);
         }
 
         // Reset failed attempts on success
@@ -323,7 +323,7 @@ export const resetPassword = mutation({
     args: { token: v.string(), newPassword: v.string() },
     handler: async (ctx, args) => {
         const pwError = validatePasswordStrength(args.newPassword);
-        if (pwError) throw new Error(pwError);
+        if (pwError) throw new ConvexError(pwError);
 
         const user = await ctx.db
             .query("users")
@@ -331,7 +331,7 @@ export const resetPassword = mutation({
             .first();
 
         if (!user || !user.resetTokenExpiry || user.resetTokenExpiry < Date.now()) {
-            throw new Error("This reset link is invalid or has expired.");
+            throw new ConvexError("This reset link is invalid or has expired.");
         }
 
         const passwordHash = await hashPassword(args.newPassword);

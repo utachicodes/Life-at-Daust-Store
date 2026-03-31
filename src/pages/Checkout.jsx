@@ -137,7 +137,7 @@ export default function Checkout() {
       setAppliedReferral({ ...result, code: referralInput.trim().toUpperCase() });
       setReferralError("");
     } catch (err) {
-      setReferralError(err.message || "Invalid referral code.");
+      setReferralError(err.data || err.message || "Invalid referral code.");
       setAppliedReferral(null);
     } finally {
       setReferralLoading(false);
