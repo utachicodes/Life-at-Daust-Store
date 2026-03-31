@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import {
@@ -10,27 +10,180 @@ import {
     User,
     Phone,
     MapPin,
-    DollarSign,
     AlertCircle,
-    Trash2
+    Trash2,
+    Search,
+    Tag,
+    RotateCcw,
+    Download,
+    ChevronLeft,
+    ChevronsLeft,
+    ChevronsRight,
+    Printer,
+    MessageCircle,
+    History
 } from "lucide-react";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
-import { useAdmin } from "../../context/AdminContext";
 import { formatPrice } from "../../utils/format.js";
+import { useAdmin } from "../../context/AdminContext";
+
+const ITEMS_PER_PAGE = 15;
 
 export default function AdminOrders() {
-    const { adminToken } = useAdmin();
+    const { adminToken, adminRole } = useAdmin();
+    const isPartner = adminRole === "partner";
     const orders = useQuery(api.orders.list, adminToken ? { adminToken } : "skip");
     const updateStatus = useMutation(api.orders.updateStatus);
+    const bulkUpdateStatusMutation = useMutation(api.orders.bulkUpdateStatus);
     const checkNabooStatus = useAction(api.naboopay.getTransaction);
     const deleteNabooTransaction = useAction(api.naboopay.deleteTransaction);
+    const refundNabooTransaction = useAction(api.naboopay.refundTransaction);
+    const [refunding, setRefunding] = useState(false);
     const deleteOrderMutation = useMutation(api.orders.deleteOrder);
     const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("All");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedIds, setSelectedIds] = useState(new Set());
+    const [bulkStatus, setBulkStatus] = useState("");
+    const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
     const isLoading = orders === undefined;
 
     const selectedOrder = orders?.find((o) => o._id === selectedOrderId) ?? null;
+
+    const PARTNER_STATUSES = ["Paid", "Processing", "Shipped", "Delivered"];
+    const ALL_STATUSES = isPartner
+        ? ["All", ...PARTNER_STATUSES]
+        : ["All", "Pending Verification", "Pending Payment", "Paid", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded"];
+
+    const filteredOrders = useMemo(() => {
+        if (!orders) return [];
+        setCurrentPage(1);
+        return orders.filter(o => {
+            const matchesSearch = !searchTerm ||
+                o.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                o.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                o.customer.phone.includes(searchTerm);
+            const matchesStatus = statusFilter === "All" || o.status === statusFilter;
+            const matchesRole = !isPartner || PARTNER_STATUSES.includes(o.status);
+            return matchesSearch && matchesStatus && matchesRole;
+        });
+    }, [orders, searchTerm, statusFilter]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+    const paginatedOrders = filteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    const exportCSV = () => {
+        const headers = ["Order ID", "Date", "Customer Name", "Phone", "Location", "Payment Method", "Status", "Item", "Qty", "Unit Price", "Color", "Size", "Hoodie Type", "Crop Top", "Front Logo", "Back Logo", "Side Logo", "Subtotal", "Delivery Fee", "Discount", "Total"];
+        const rows = filteredOrders.flatMap(o =>
+            o.items.map((item, idx) => [
+                idx === 0 ? o.orderId : "",
+                idx === 0 ? new Date(o.createdAt).toLocaleDateString() : "",
+                idx === 0 ? o.customer.name : "",
+                idx === 0 ? o.customer.phone : "",
+                idx === 0 ? o.customer.location : "",
+                idx === 0 ? (o.paymentMethod || "") : "",
+                idx === 0 ? o.status : "",
+                item.isProductSet ? `[Bundle] ${item.name}` : item.name,
+                item.qty,
+                item.price,
+                item.color || "",
+                item.size || "",
+                item.hoodieType || "",
+                item.isCropTop ? "Yes" : "",
+                item.frontLogo || "",
+                item.backLogo || "",
+                item.sideLogo || "",
+                idx === 0 ? (o.subtotal || 0) : "",
+                idx === 0 ? (o.deliveryFee || 0) : "",
+                idx === 0 ? (o.discount || 0) : "",
+                idx === 0 ? (o.total || 0) : "",
+            ])
+        );
+        const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `orders-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const toggleSelectOrder = (id, e) => {
+        e.stopPropagation();
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === paginatedOrders.length && paginatedOrders.length > 0) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(paginatedOrders.map(o => o._id)));
+        }
+    };
+
+    const handleBulkUpdate = async () => {
+        if (!bulkStatus || selectedIds.size === 0) return;
+        setIsBulkUpdating(true);
+        try {
+            await bulkUpdateStatusMutation({ ids: [...selectedIds], status: bulkStatus, adminToken });
+            setSelectedIds(new Set());
+            setBulkStatus("");
+        } catch {
+            alert("Failed to bulk update orders.");
+        } finally {
+            setIsBulkUpdating(false);
+        }
+    };
+
+    const printPackingSlip = (order) => {
+        const w = window.open("", "_blank", "width=700,height=900");
+        w.document.write(`<!DOCTYPE html><html><head><title>Packing Slip - ${order.orderId}</title>
+<style>
+  body{font-family:Arial,sans-serif;padding:40px;color:#0A192F;max-width:600px;margin:0 auto}
+  h1{font-size:22px;margin-bottom:4px}
+  .meta{font-size:12px;color:#888;margin-bottom:24px}
+  .section{font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.15em;color:#aaa;margin:20px 0 8px}
+  .customer{background:#f9f9f9;padding:14px 18px;border-radius:8px;font-size:13px;line-height:2}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px}
+  th{background:#0A192F;color:#fff;padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.1em}
+  td{padding:8px 10px;border-bottom:1px solid #eee;font-size:13px}
+  .totals td{padding:6px 10px}
+  .grand td{font-size:15px;font-weight:900;border-top:2px solid #0A192F;padding-top:10px}
+  .footer{margin-top:40px;text-align:center;font-size:10px;color:#ccc}
+  .status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:bold;background:#f3f4f6}
+</style></head><body>
+<h1>Life at DAUST &mdash; Packing Slip</h1>
+<div class="meta">Order <strong>${order.orderId}</strong> &nbsp;·&nbsp; ${new Date(order.createdAt).toLocaleString()} &nbsp;·&nbsp; <span class="status">${order.status}</span></div>
+<div class="section">Customer</div>
+<div class="customer"><strong>${order.customer.name}</strong><br>📞 ${order.customer.phone}<br>📍 ${order.customer.location}</div>
+<div class="section">Items</div>
+<table><thead><tr><th>Item</th><th>Details</th><th>Qty</th><th>Price</th></tr></thead><tbody>
+${order.items.map(item => `<tr>
+  <td>${item.name}</td>
+  <td style="color:#999;font-size:11px">${[item.size ? `Size: ${item.size}` : "", item.color ? `Color: ${item.color}` : "", item.hoodieType ? `Type: ${item.hoodieType}` : "", item.isCropTop ? "Crop Top" : "", item.frontLogo ? `Front: ${item.frontLogo}` : ""].filter(Boolean).join(" · ") || "—"}</td>
+  <td>${item.qty}</td>
+  <td>${((item.price || 0) * (item.qty || 1)).toLocaleString()} CFA</td>
+</tr>`).join("")}
+</tbody></table>
+<table class="totals"><tbody>
+  <tr><td>Subtotal</td><td style="text-align:right">${(order.subtotal || 0).toLocaleString()} CFA</td></tr>
+  ${order.deliveryFee > 0 ? `<tr><td>Delivery</td><td style="text-align:right">${order.deliveryFee.toLocaleString()} CFA</td></tr>` : ""}
+  ${order.discount > 0 ? `<tr style="color:green"><td>Early Discount (15%)</td><td style="text-align:right">-${order.discount.toLocaleString()} CFA</td></tr>` : ""}
+  <tr class="grand"><td><strong>Total</strong></td><td style="text-align:right"><strong>${(order.total || 0).toLocaleString()} CFA</strong></td></tr>
+</tbody></table>
+<div class="footer">Life at DAUST Store &nbsp;·&nbsp; DAUST Campus &nbsp;·&nbsp; Printed ${new Date().toLocaleString()}</div>
+</body></html>`);
+        w.document.close();
+        setTimeout(() => w.print(), 300);
+    };
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -41,6 +194,7 @@ export default function AdminOrders() {
             case "Shipped": return "bg-blue-50 text-blue-600";
             case "Delivered": return "bg-green-50 text-green-600";
             case "Cancelled": return "bg-red-50 text-red-600";
+            case "Refunded": return "bg-purple-50 text-purple-600";
             default: return "bg-gray-100 text-gray-600";
         }
     };
@@ -71,6 +225,20 @@ export default function AdminOrders() {
         }
     };
 
+    const handleRefund = async () => {
+        if (!selectedOrder?.naboopayOrderId) return;
+        if (!window.confirm(`Issue a refund for order ${selectedOrder.orderId}? This will contact NabooPay and cannot be undone.`)) return;
+        setRefunding(true);
+        try {
+            await refundNabooTransaction({ naboopayOrderId: selectedOrder.naboopayOrderId });
+            await updateStatus({ id: selectedOrder._id, status: "Refunded", adminToken });
+        } catch (err) {
+            alert(`Refund failed: ${err?.message || "Unknown error"}`);
+        } finally {
+            setRefunding(false);
+        }
+    };
+
     const handleDeleteOrder = async () => {
         try {
             await deleteOrderMutation({ id: selectedOrder._id, adminToken });
@@ -95,37 +263,113 @@ export default function AdminOrders() {
             {/* Orders List */}
             <div className={`${selectedOrder ? "lg:col-span-4" : "lg:col-span-12"} transition-all duration-500`}>
                 <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-gray-50">
-                        <h2 className="text-lg font-black text-brand-navy">All Orders</h2>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{orders.length} total shipments</p>
+                    <div className="p-6 border-b border-gray-50 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-lg font-black text-brand-navy">All Orders</h2>
+                            <div className="flex items-center gap-3">
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{filteredOrders.length} / {isPartner ? orders.filter(o => PARTNER_STATUSES.includes(o.status)).length : orders.length}</p>
+                                <button
+                                    onClick={exportCSV}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-brand-navy hover:text-white font-bold text-xs uppercase tracking-widest transition-all"
+                                    title="Export filtered orders as CSV"
+                                >
+                                    <Download size={13} /> CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                            <input
+                                type="text"
+                                placeholder="Search by order ID, name or phone..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-9 pr-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-orange/20"
+                            />
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                            {ALL_STATUSES.map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => setStatusFilter(s)}
+                                    className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full transition-all ${statusFilter === s ? "bg-brand-navy text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+
+                        {selectedIds.size > 0 && (
+                            <div className="flex items-center gap-2 p-3 bg-brand-navy/5 rounded-xl border border-brand-navy/10 animate-in fade-in duration-200">
+                                <span className="text-xs font-black text-brand-navy">{selectedIds.size} selected</span>
+                                <select
+                                    value={bulkStatus}
+                                    onChange={e => setBulkStatus(e.target.value)}
+                                    className="text-xs font-bold bg-white border border-gray-200 rounded-lg px-2 py-1.5 flex-1 focus:outline-none focus:ring-2 focus:ring-brand-orange/20"
+                                >
+                                    <option value="">Change status to...</option>
+                                    {ALL_STATUSES.filter(s => s !== "All").map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                                <button
+                                    onClick={handleBulkUpdate}
+                                    disabled={!bulkStatus || isBulkUpdating}
+                                    className="px-3 py-1.5 bg-brand-navy text-white text-xs font-black rounded-lg disabled:opacity-40 hover:bg-brand-orange transition-all"
+                                >
+                                    {isBulkUpdating ? "Updating..." : "Apply"}
+                                </button>
+                                <button onClick={() => setSelectedIds(new Set())} className="text-xs text-gray-400 hover:text-red-500 font-bold transition-colors">
+                                    Clear
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="divide-y divide-gray-50 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
-                        {orders.map((order) => (
-                            <button
+                    <div className="divide-y divide-gray-50 max-h-[calc(100vh-350px)] overflow-y-auto pr-1">
+                        {paginatedOrders.length > 0 && (
+                            <div className="px-6 py-2 flex items-center gap-3 bg-gray-50/50 border-b border-gray-50">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedIds.size === paginatedOrders.length && paginatedOrders.length > 0}
+                                    onChange={toggleSelectAll}
+                                    className="w-3.5 h-3.5 rounded accent-brand-orange cursor-pointer"
+                                />
+                                <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Select all</span>
+                            </div>
+                        )}
+                        {paginatedOrders.map((order) => (
+                            <div
                                 key={order._id}
                                 onClick={() => setSelectedOrderId(order._id)}
-                                className={`w-full text-left p-6 hover:bg-gray-50 transition-all flex items-center justify-between group ${selectedOrder?._id === order._id ? "bg-gray-50 ring-1 ring-inset ring-brand-orange/10" : ""
+                                className={`w-full text-left p-6 hover:bg-gray-50 transition-all flex items-center gap-3 group cursor-pointer ${selectedOrder?._id === order._id ? "bg-gray-50 ring-1 ring-inset ring-brand-orange/10" : ""
                                     }`}
                             >
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-black text-brand-navy text-sm">{order.orderId}</span>
-                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${getStatusColor(order.status)}`}>
-                                            {order.status}
-                                        </span>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedIds.has(order._id)}
+                                    onChange={e => toggleSelectOrder(order._id, e)}
+                                    onClick={e => e.stopPropagation()}
+                                    className="w-3.5 h-3.5 rounded accent-brand-orange cursor-pointer flex-shrink-0"
+                                />
+                                <div className="flex-1 flex items-center justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-black text-brand-navy text-sm">{order.orderId}</span>
+                                            <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${getStatusColor(order.status)}`}>
+                                                {order.status}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs font-bold text-gray-500">{order.customer.name}</p>
+                                        <p className="text-[10px] text-gray-400 mt-1">{new Date(order.createdAt).toLocaleDateString()}</p>
                                     </div>
-                                    <p className="text-xs font-bold text-gray-500">{order.customer.name}</p>
-                                    <p className="text-[10px] text-gray-400 mt-1">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                    <div className="text-right flex items-center gap-3">
+                                        <p className="font-black text-brand-navy text-sm">{formatPrice(order?.total || 0)}</p>
+                                        <ChevronRight size={16} className={`text-gray-300 group-hover:text-brand-orange transition-all ${selectedOrder?._id === order._id ? "translate-x-1 text-brand-orange" : ""}`} />
+                                    </div>
                                 </div>
-                                <div className="text-right flex items-center gap-3">
-                                    <p className="font-black text-brand-navy text-sm">{formatPrice(order?.total || 0)}</p>
-                                    <ChevronRight size={16} className={`text-gray-300 group-hover:text-brand-orange transition-all ${selectedOrder?._id === order._id ? "translate-x-1 text-brand-orange" : ""}`} />
-                                </div>
-                            </button>
+                            </div>
                         ))}
 
-                        {orders.length === 0 && (
+                        {filteredOrders.length === 0 && (
                             <div className="p-20 text-center">
                                 <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-4">
                                     <Package className="h-8 w-8 text-gray-200" />
@@ -134,6 +378,44 @@ export default function AdminOrders() {
                             </div>
                         )}
                     </div>
+
+                    {totalPages > 1 && (
+                        <div className="p-4 border-t border-gray-50 flex items-center justify-between">
+                            <button
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-brand-navy disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronsLeft size={16} />
+                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-1.5 rounded-lg text-gray-400 hover:text-brand-navy disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <span className="text-xs font-bold text-gray-500 px-3">
+                                    {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-1.5 rounded-lg text-gray-400 hover:text-brand-navy disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-brand-navy disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronsRight size={16} />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -154,6 +436,22 @@ export default function AdminOrders() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => printPackingSlip(selectedOrder)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-brand-navy hover:text-white font-bold text-xs uppercase tracking-widest transition-all"
+                                >
+                                    <Printer size={14} /> Print
+                                </button>
+                                {selectedOrder.naboopayOrderId && selectedOrder.status === "Paid" && (
+                                    <button
+                                        onClick={handleRefund}
+                                        disabled={refunding}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50"
+                                    >
+                                        <RotateCcw size={14} className={refunding ? "animate-spin" : ""} />
+                                        {refunding ? "Refunding..." : "Refund"}
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setShowDeleteConfirm(true)}
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white font-bold text-xs uppercase tracking-widest transition-all"
@@ -269,7 +567,7 @@ export default function AdminOrders() {
                                                 <User size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black uppercase text-gray-400">FullName</p>
+                                                <p className="text-[10px] font-black uppercase text-gray-400">Full Name</p>
                                                 <p className="font-bold text-brand-navy">{selectedOrder.customer.name}</p>
                                             </div>
                                         </div>
@@ -277,9 +575,27 @@ export default function AdminOrders() {
                                             <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
                                                 <Phone size={18} />
                                             </div>
-                                            <div>
+                                            <div className="flex-1">
                                                 <p className="text-[10px] font-black uppercase text-gray-400">Phone</p>
-                                                <p className="font-bold text-brand-navy">{selectedOrder.customer.phone}</p>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <p className="font-bold text-brand-navy">{selectedOrder.customer.phone}</p>
+                                                    <a
+                                                        href={`https://wa.me/${selectedOrder.customer.phone.replace(/\D/g, "")}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-all"
+                                                        title="Open WhatsApp chat"
+                                                    >
+                                                        <MessageCircle size={10} /> WhatsApp
+                                                    </a>
+                                                    <button
+                                                        onClick={() => { setSearchTerm(selectedOrder.customer.phone); setSelectedOrderId(null); }}
+                                                        className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-navy/5 text-brand-navy/50 hover:bg-brand-orange/10 hover:text-brand-orange transition-all"
+                                                        title="View all orders from this customer"
+                                                    >
+                                                        All orders
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-4">
@@ -287,7 +603,7 @@ export default function AdminOrders() {
                                                 <MapPin size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-black uppercase text-gray-400">Location</p>
+                                                <p className="text-[10px] font-black uppercase text-gray-400">Delivery Location</p>
                                                 <p className="font-bold text-brand-navy">{selectedOrder.customer.location}</p>
                                             </div>
                                         </div>
@@ -304,20 +620,60 @@ export default function AdminOrders() {
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-bold text-brand-navy truncate">{item.name}</p>
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                                            QTY: {item.qty} {item?.size ? `• Size: ${item.size}` : ""} {item?.color ? `• ${item.color}` : ""} {item?.frontLogo ? `• Front: ${item.frontLogo}` : ""} {item?.backLogo ? `• Back: ${item.backLogo}` : ""} {item?.sideLogo ? `• Side: ${item.sideLogo}` : ""} {item?.logo ? `• Logo: ${item.logo}${item.logoPosition ? ` (${item.logoPosition})` : ""}` : ""}
+                                                            QTY: {item.qty} {item?.size ? `• Size: ${item.size}` : ""} {item?.color ? `• ${item.color}` : ""} {item?.hoodieType ? `• Type: ${item.hoodieType}` : ""} {item?.frontLogo ? `• Front: ${item.frontLogo}` : ""} {item?.backLogo ? `• Back: ${item.backLogo}` : ""} {item?.sideLogo ? `• Side: ${item.sideLogo}` : ""} {item?.logo ? `• Logo: ${item.logo}${item.logoPosition ? ` (${item.logoPosition})` : ""}` : ""}
                                                         </p>
                                                     </div>
                                                     <p className="font-black text-brand-navy text-sm">{formatPrice((item.price || 0) * (item.qty || 1))}</p>
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="p-4 bg-brand-navy text-white flex justify-between items-center">
-                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Grand Total</span>
-                                            <span className="text-lg font-black">{formatPrice(selectedOrder?.total || 0)}</span>
+                                        <div className="bg-brand-navy text-white divide-y divide-white/10">
+                                            <div className="px-4 py-2.5 flex justify-between items-center">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Subtotal</span>
+                                                <span className="text-sm font-bold">{formatPrice(selectedOrder.subtotal || 0)}</span>
+                                            </div>
+                                            {selectedOrder.deliveryFee > 0 && (
+                                                <div className="px-4 py-2.5 flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Delivery</span>
+                                                    <span className="text-sm font-bold">{formatPrice(selectedOrder.deliveryFee)}</span>
+                                                </div>
+                                            )}
+                                            {selectedOrder.discount > 0 && (
+                                                <div className="px-4 py-2.5 flex justify-between items-center">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-green-400 flex items-center gap-1.5">
+                                                        <Tag size={10} /> Early Discount (15%)
+                                                    </span>
+                                                    <span className="text-sm font-bold text-green-400">-{formatPrice(selectedOrder.discount)}</span>
+                                                </div>
+                                            )}
+                                            <div className="px-4 py-3 flex justify-between items-center">
+                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Grand Total</span>
+                                                <span className="text-lg font-black">{formatPrice(selectedOrder?.total || 0)}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
+                            {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+                                        <History size={13} /> Status Timeline
+                                    </h3>
+                                    <div className="relative pl-5 space-y-3">
+                                        <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gray-100" />
+                                        {[...selectedOrder.statusHistory].reverse().map((h, i) => (
+                                            <div key={i} className="flex items-start gap-3 relative">
+                                                <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-0.5 border-2 ${i === 0 ? "border-brand-orange bg-brand-orange" : "border-gray-200 bg-white"}`} />
+                                                <div>
+                                                    <p className={`text-xs font-black ${i === 0 ? "text-brand-orange" : "text-brand-navy"}`}>{h.status}</p>
+                                                    <p className="text-[10px] text-gray-400">{new Date(h.timestamp).toLocaleString()}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

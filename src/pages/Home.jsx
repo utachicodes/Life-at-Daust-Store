@@ -1,9 +1,8 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { ArrowRight, ChevronLeft, ChevronRight, Quote, Star, Zap } from "lucide-react";
-import { useMemo } from "react";
 import Hero from "../components/Hero.jsx";
 import Newsletter from "../components/Newsletter.jsx";
 import ProductCard from "../components/ProductCard.jsx";
@@ -176,8 +175,22 @@ function TestimonialMarquee() {
 export default function Home() {
   const collections = useQuery(api.collections.list);
   const scrollRef = useRef(null);
-
   const products = useQuery(api.products.list);
+  const heroMedia = useQuery(api.settings.getHeroMedia) || [];
+  const reelVideos = useQuery(api.settings.getReelVideos) || [];
+  const [heroIdx, setHeroIdx] = useState(0);
+  const advanceHero = () => setHeroIdx(i => (i + 1) % heroMedia.length);
+
+  // For image slides use a 5s timer; for video slides wait for onEnded
+  useEffect(() => {
+    if (heroMedia.length <= 1) return;
+    const currentSlide = heroMedia[heroIdx];
+    if (currentSlide?.type === "video") return; // video advances via onEnded
+    const timer = setTimeout(advanceHero, 5000);
+    return () => clearTimeout(timer);
+  }, [heroIdx, heroMedia.length]);
+
+  const currentSlide = heroMedia.length > 0 ? heroMedia[heroIdx] : null;
 
   const featuredProduct = useMemo(() => {
     if (!products) return null;
@@ -192,7 +205,6 @@ export default function Home() {
   }, [products]);
 
   const collectionsRef = useReveal(0.08);
-  const spotlightRef = useReveal(0.1);
   const trendingRef = useReveal(0.08);
 
   const scroll = (dir) => {
@@ -208,7 +220,9 @@ export default function Home() {
         title="Welcome to the Life At Daust Store"
         subtitle="Campus apparel and essentials designed by students, made for the DAUST community."
         cta="Shop Collection"
-        image="/assets/DaustianShoot/Homepage.jpg"
+        image={currentSlide?.type === "image" ? currentSlide.url : (!currentSlide ? "/assets/DaustianShoot/Homepage.jpg" : undefined)}
+        video={currentSlide?.type === "video" ? currentSlide.url : undefined}
+        onVideoEnded={heroMedia.length > 1 ? advanceHero : undefined}
         to="/shop"
       />
 
@@ -260,13 +274,51 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4 ── Removed Brand Stats Section ── */}
+      {/* 4 ── CAMPUS REELS ── */}
+      {reelVideos.length > 0 && (
+        <section className="bg-brand-navy pt-20 sm:pt-28 pb-12 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 sm:mb-14 gap-4">
+              <div>
+                <span className="inline-block text-brand-orange text-[11px] font-[900] uppercase tracking-[0.22em] mb-3 px-3 py-1.5 bg-brand-orange/10 rounded-full">
+                  Campus Life
+                </span>
+                <h2 className="text-[var(--text-4xl)] font-[900] text-white tracking-tight">
+                  Life at DAUST
+                </h2>
+                <p className="text-white/40 text-base mt-2 max-w-md">
+                  Real moments. Real students. Real DAUST.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+              {reelVideos.map((url, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-[180px] sm:w-[210px] aspect-[9/16] rounded-2xl overflow-hidden bg-white/5 group relative shadow-2xl shadow-black/40"
+                >
+                  <video
+                    src={url}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 5 ── PRODUCT SPOTLIGHT ── */}
       {featuredProduct && (
         <section className="bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-            <div ref={spotlightRef} className="section-reveal grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
               {/* Image */}
               <div className="relative">
@@ -325,7 +377,7 @@ export default function Home() {
       )}
 
       {/* 6 ── TRENDING NOW ── */}
-      <section className="bg-brand-cream py-20 sm:py-28">
+      <section className="bg-brand-cream pt-14 sm:pt-20 pb-20 sm:pb-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div ref={trendingRef} className="section-reveal">
             <div className="flex items-end justify-between mb-10 sm:mb-14">
@@ -361,7 +413,7 @@ export default function Home() {
             >
               {trendingProducts.map(product => (
                 <div
-                  key={product._id || product.id}
+                  key={product._id}
                   className="min-w-[260px] sm:min-w-[280px] max-w-[280px] snap-start flex-shrink-0"
                 >
                   <ProductCard product={product} />

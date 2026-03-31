@@ -9,9 +9,12 @@ export default function Hero({
   cta,
   to = "/",
   image,
+  video,
+  onVideoEnded,
   align = "left",
 }) {
   const isCenter = align === "center";
+  const hasMedia = image || video;
 
   return (
     <section className="relative min-h-[calc(100vh-72px)] flex items-center bg-brand-navy overflow-hidden">
@@ -19,28 +22,37 @@ export default function Hero({
       {/* ── Background: dot pattern ── */}
       <div className="absolute inset-0 dot-pattern pointer-events-none z-0" />
 
-      {/* ── Background image (reduced overlay opacity for clarity) ── */}
-      {image && (
-        <div className="absolute inset-0 z-0 text-gray-500">
-          {/* Unsplash/Local image with softer overlays */}
+      {/* ── Background media ── */}
+      {hasMedia && (
+        <div className="absolute inset-0 z-0">
           <div className="absolute inset-y-0 right-0 w-full lg:w-[58%]">
-            <img
-              src={image}
-              alt=""
-              className="w-full h-full object-cover object-center"
-              decoding="async"
-            />
-            {/* Lighter gradients to reduce the "blurred" feel of dark overlays */}
+            {video ? (
+              <video
+                key={video}
+                src={video}
+                autoPlay
+                muted
+                playsInline
+                onEnded={onVideoEnded}
+                className="w-full h-full object-cover object-center"
+              />
+            ) : (
+              <img
+                src={image}
+                alt=""
+                className="w-full h-full object-cover object-center"
+                decoding="async"
+              />
+            )}
             <div className="absolute inset-0 bg-gradient-to-r from-brand-navy via-brand-navy/60 to-transparent lg:from-brand-navy lg:via-brand-navy/50 lg:to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/40 via-transparent to-brand-navy/20" />
           </div>
-          {/* Extra mobile overlay - lighter */}
           <div className="absolute inset-0 bg-brand-navy/35 lg:hidden" />
         </div>
       )}
 
-      {/* No image fallback */}
-      {!image && (
+      {/* No media fallback */}
+      {!hasMedia && (
         <div className="absolute inset-0 z-0 bg-gradient-to-br from-brand-navy via-brand-navy-light to-brand-navy" />
       )}
 

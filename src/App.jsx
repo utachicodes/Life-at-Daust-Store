@@ -1,5 +1,11 @@
 import React, { useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 import AOS from "aos";
 import "aos/dist/aos.css";
 
@@ -27,7 +33,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 // Admin Imports
-import { AdminProvider } from "./context/AdminContext";
+import { AdminProvider, useAdmin } from "./context/AdminContext";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -35,6 +41,13 @@ import AdminProducts from "./pages/admin/Products";
 import AdminProductSets from "./pages/admin/ProductSets";
 import AdminCollections from "./pages/admin/Collections";
 import AdminOrders from "./pages/admin/Orders";
+import AdminHeroSettings from "./pages/admin/HeroSettings";
+
+function ManagerOnlyRoute({ children }) {
+  const { adminRole } = useAdmin();
+  if (adminRole === "partner") return <Navigate to="/admin/orders" replace />;
+  return children;
+}
 
 export default function App() {
   useEffect(() => {
@@ -43,29 +56,15 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <AdminProvider>
-          <Routes>
-            {/* Auth Routes (no Layout) */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-
-            {/* Main Storefront Routes */}
-            <Route element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/collections/:slug" element={<Collection />} />
-              <Route path="/about" element={<About />} />
-              <Route
-                path="/referral"
-                element={
-                  <ProtectedRoute>
-                    <Referral />
-                  </ProtectedRoute>
-                }
-              />
+      <ScrollToTop />
+      <AdminProvider>
+        <Routes>
+          {/* Main Storefront Routes */}
+          <Route element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/collections/:slug" element={<Collection />} />
+            <Route path="/about" element={<About />} />
 
               <Route path="/cart" element={<Cart />} />
               <Route
@@ -88,15 +87,16 @@ export default function App() {
               <Route path="/product/:id" element={<ProductDetails />} />
             </Route>
 
-            {/* Admin Routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="product-sets" element={<AdminProductSets />} />
-              <Route path="collections" element={<AdminCollections />} />
-              <Route path="orders" element={<AdminOrders />} />
-            </Route>
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<ManagerOnlyRoute><AdminDashboard /></ManagerOnlyRoute>} />
+            <Route path="products" element={<ManagerOnlyRoute><AdminProducts /></ManagerOnlyRoute>} />
+            <Route path="product-sets" element={<ManagerOnlyRoute><AdminProductSets /></ManagerOnlyRoute>} />
+            <Route path="collections" element={<ManagerOnlyRoute><AdminCollections /></ManagerOnlyRoute>} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="hero" element={<ManagerOnlyRoute><AdminHeroSettings /></ManagerOnlyRoute>} />
+          </Route>
 
             <Route path="*" element={<NotFound />} />
           </Routes>

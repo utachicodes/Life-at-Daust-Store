@@ -10,17 +10,18 @@ import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 export default function ProductDetails() {
     const { id } = useParams();
-    const { addItem } = useCart();
+    const { addItem, showToast } = useCart();
 
     const product = useQuery(api.products.getById, id ? { id } : "skip");
 
     const [mainImage, setMainImage] = useState(null);
     const [selectedColor, setSelectedColor] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
-    const [selectedFrontLogo, setSelectedFrontLogo] = useState(null);
-    const [selectedBackLogo, setSelectedBackLogo] = useState(null);
-    const [selectedSideLogo, setSelectedSideLogo] = useState(null);
+    const [selectedFrontLogos, setSelectedFrontLogos] = useState([]);
+    const [selectedBackLogos, setSelectedBackLogos] = useState([]);
+    const [selectedSideLogos, setSelectedSideLogos] = useState([]);
     const [selectedHoodieType, setSelectedHoodieType] = useState(null);
+    const [isCropTop, setIsCropTop] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [logoPreview, setLogoPreview] = useState(null);
     const [showAddedAnimation, setShowAddedAnimation] = useState(false);
@@ -36,10 +37,11 @@ export default function ProductDetails() {
             setMainImage(product.image);
             setSelectedColor(product.colors?.[0] || null);
             setSelectedSize(product.sizes?.[0] || null);
-            setSelectedFrontLogo(null);
-            setSelectedBackLogo(null);
-            setSelectedSideLogo(null);
+            setSelectedFrontLogos([]);
+            setSelectedBackLogos([]);
+            setSelectedSideLogos([]);
             setSelectedHoodieType(null);
+            setIsCropTop(false);
         }
     }, [product]);
 
@@ -115,9 +117,9 @@ export default function ProductDetails() {
                 </nav>
             </div>
 
-            <main className="max-w-7xl mx-auto px-4 py-12 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+            <main className="max-w-7xl mx-auto px-4 py-6 sm:py-24 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-20">
 {/* Left: Image Gallery (Span 7) */}
-                <div id="product-image" className="lg:col-span-5 space-y-4 sm:space-y-6">
+                <div id="product-image" className="lg:col-span-5 space-y-2 sm:space-y-6">
                     <div className="relative aspect-[3/4] sm:aspect-[4/5] rounded-2xl sm:rounded-[2rem] overflow-hidden bg-gray-50/50 premium-shadow border border-gray-100 animate-in fade-in zoom-in-95 duration-700">
                         <img
                             src={mainImage || product.image}
@@ -130,22 +132,23 @@ export default function ProductDetails() {
                                 className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10 animate-in fade-in duration-300 cursor-pointer"
                                 onClick={() => setLogoPreview(null)}
                             >
-                                <div className="bg-white rounded-2xl p-4 shadow-2xl animate-in zoom-in-95 duration-300 max-w-[70%]">
+                                <div className="bg-white rounded-2xl p-2 sm:p-4 shadow-2xl animate-in zoom-in-95 duration-300 max-w-[70%]">
                                     <img src={logoPreview} alt="Logo preview" className="w-full object-contain rounded-xl" />
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center mt-3">Logo Preview</p>
+                                    <p className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-widest text-center mt-1 sm:mt-3">Logo Preview</p>
                                 </div>
                             </div>
                         )}
                     </div>
-                    <div className="flex gap-2 sm:gap-4 overflow-x-auto py-2 sm:py-4 scrollbar-hide px-1 sm:px-2">
+                    <div className="flex gap-3 sm:gap-4 overflow-x-auto py-2 sm:py-4 scrollbar-hide px-1 sm:px-2 snap-x snap-mandatory">
                         {gallery.map((img, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => setMainImage(img)}
-                                className={`flex-shrink-0 w-16 h-20 sm:w-24 sm:h-28 rounded-xl sm:rounded-2xl overflow-hidden border-2 transition-all duration-300 interactive-scale ${mainImage === img
+                                className={`flex-shrink-0 w-20 h-24 sm:w-24 sm:h-28 rounded-xl sm:rounded-2xl overflow-hidden border-2 transition-all duration-300 active:scale-95 snap-center ${mainImage === img
                                     ? "border-brand-orange shadow-lg scale-105"
                                     : "border-transparent opacity-60 grayscale-[50%]"
                                     }`}
+                                aria-label={`View image ${idx + 1}`}
                             >
                                 <img src={img} alt="" className="w-full h-full object-cover" />
                             </button>
@@ -154,41 +157,41 @@ export default function ProductDetails() {
                 </div>
 
                 {/* Right: Info & Actions (Span 5) */}
-                <div className="lg:col-span-7 flex flex-col pt-4">
-                    <div className="mb-10 animate-in slide-in-from-right-10 duration-700 delay-100">
+                <div className="lg:col-span-7 flex flex-col pt-0 sm:pt-4">
+                    <div className="mb-3 sm:mb-10 animate-in slide-in-from-right-10 duration-700 delay-100">
                         {product.badge && (
-                            <span className="inline-block px-4 py-1.5 rounded-full bg-orange-100 text-brand-orange text-[10px] font-black uppercase tracking-[0.2em] mb-6 shadow-sm">
+                            <span className="inline-block px-2 py-1 sm:px-4 sm:py-1.5 rounded-full bg-orange-100 text-brand-orange text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] mb-2 sm:mb-6 shadow-sm">
                                 {product.badge}
                             </span>
                         )}
-                        <h1 className="text-[var(--text-4xl)] font-black text-brand-navy leading-tight tracking-tighter mb-2">
+                        <h1 className="text-base sm:text-[var(--text-4xl)] font-black text-brand-navy leading-tight tracking-tighter mb-1 sm:mb-2">
                             {product.name}
                         </h1>
-                        <div className="flex items-center gap-6">
-                            <span className="text-3xl font-black text-brand-orange tracking-tight">
+                        <div className="flex items-center gap-2 sm:gap-6 flex-wrap">
+                            <span className="text-lg sm:text-3xl font-black text-brand-orange tracking-tight">
                                 {formatPrice(product.price)}
                             </span>
-                            <div className="h-6 w-[1px] bg-gray-200" />
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 rounded-lg">
-                                <Star size={16} fill="#fbbf24" className="text-yellow-400" />
-                                <span className="text-sm font-black text-gray-800">{product.rating}</span>
+                            <div className="hidden sm:block h-6 w-[1px] bg-gray-200" />
+                            <div className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-yellow-50 rounded-lg">
+                                <Star size={12} fill="#fbbf24" className="text-yellow-400 sm:w-4 sm:h-4" />
+                                <span className="text-xs sm:text-sm font-black text-gray-800">{product.rating}</span>
                             </div>
                         </div>
                     </div>
 
                     {product.description && (
-                        <p className="text-gray-500 text-lg leading-relaxed mb-10 font-medium">
+                        <p className="hidden sm:block text-gray-500 text-lg leading-relaxed mb-10 font-medium">
                             {product.description}
                         </p>
                     )}
 
                     {/* Variants Section */}
-                    <div className="space-y-10 mb-12 animate-in slide-in-from-right-10 duration-700 delay-200">
+                    <div className="space-y-4 sm:space-y-10 mb-4 sm:mb-12 animate-in slide-in-from-right-10 duration-700 delay-200">
                         {/* Hoodie Type */}
                         {product.hoodieTypes && product.hoodieTypes.length > 0 && (
-                            <div className="space-y-5">
+                            <div className="space-y-2 sm:space-y-5">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
                                         Hoodie Type · <span className="text-brand-navy">{selectedHoodieType || "Select"}</span>
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
@@ -197,7 +200,7 @@ export default function ProductDetails() {
                                                 key={t}
                                                 type="button"
                                                 onClick={() => setSelectedHoodieType(t)}
-                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${selectedHoodieType === t
+                                                className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${selectedHoodieType === t
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                     : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                                     }`}
@@ -210,54 +213,85 @@ export default function ProductDetails() {
                             </div>
                         )}
 
+                        {/* Crop Top Option */}
+                        {product.hasCropTopOption && (
+                            <div className="space-y-2 sm:space-y-5">
+                                <div>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
+                                        Crop Top Version · <span className="text-brand-navy">{isCropTop ? "Yes" : "No"}</span>
+                                    </h3>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCropTop(false)}
+                                            className={`px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${!isCropTop
+                                                ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
+                                                : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
+                                            }`}
+                                        >
+                                            Regular
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsCropTop(true)}
+                                            className={`px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${isCropTop
+                                                ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
+                                                : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
+                                            }`}
+                                        >
+                                            Crop Top
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Front Logo Selection */}
                         {product.logos && product.logos.filter(l => !l.positions || l.positions.includes("front")).length > 0 && (
-                            <div className="space-y-5">
+                            <div className="space-y-2 sm:space-y-5">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
-                                        Front Logo · <span className="text-brand-navy">{selectedFrontLogo?.name || "None"}</span>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
+                                        Front Logo <span className="normal-case font-medium">(choose one)</span> · <span className="text-brand-navy">{selectedFrontLogos.length > 0 ? selectedFrontLogos[0].name : "None"}</span>
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
                                         <button
                                             type="button"
-                                            onClick={() => setSelectedFrontLogo(null)}
-                                            className={`px-4 py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${
-                                                !selectedFrontLogo
+                                            onClick={() => setSelectedFrontLogos([])}
+                                            className={`px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                selectedFrontLogos.length === 0
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                     : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                             }`}
                                         >
                                             None
                                         </button>
-                                        {product.logos.filter(l => !l.positions || l.positions.includes("front")).map((logo) => (
-                                            <button
-                                                key={logo.id || logo.name}
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedFrontLogo(logo);
-                                                    if (window.innerWidth < 1024) {
-                                                        const imageSection = document.getElementById('product-image');
-                                                        if (imageSection) {
-                                                            imageSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        {product.logos.filter(l => !l.positions || l.positions.includes("front")).map((logo) => {
+                                            const isSelected = selectedFrontLogos.some(l => (l.id && l.id === logo.id) || l.name === logo.name);
+                                            return (
+                                                <button
+                                                    key={logo.id || logo.name}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedFrontLogos(isSelected ? [] : [logo]);
+                                                        if (!isSelected && logo.image && window.innerWidth < 1024) {
+                                                            document.getElementById('product-image')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                         }
-                                                    }
-                                                    if (logo.image) {
-                                                        setLogoPreview(logo.image);
-                                                        setTimeout(() => setLogoPreview(null), 2500);
-                                                    }
-                                                }}
-                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${
-                                                    selectedFrontLogo?.id === logo.id || selectedFrontLogo?.name === logo.name
-                                                        ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
-                                                        : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
-                                                }`}
-                                            >
-                                                {logo.image && (
-                                                    <img src={logo.image} alt={logo.name} className="w-7 h-7 rounded-lg object-cover" />
-                                                )}
-                                                {logo.name}
-                                            </button>
-                                        ))}
+                                                        if (!isSelected && logo.image) {
+                                                            setLogoPreview(logo.image);
+                                                            setTimeout(() => setLogoPreview(null), 2500);
+                                                        }
+                                                    }}
+                                                    className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                        isSelected
+                                                            ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
+                                                            : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
+                                                    }`}
+                                                >
+                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-5 h-5 sm:w-7 sm:h-7 rounded-md object-cover" />}
+                                                    {logo.name}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -265,52 +299,69 @@ export default function ProductDetails() {
 
                         {/* Back Logo Selection */}
                         {product.logos && product.logos.filter(l => !l.positions || l.positions.includes("back")).length > 0 && (
-                            <div className="space-y-5">
+                            <div className="space-y-2 sm:space-y-5">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
-                                        Back Logo · <span className="text-brand-navy">{selectedBackLogo?.name || "None"}</span>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
+                                        Back Logo · <span className="text-brand-navy">{selectedBackLogos.length > 0 ? selectedBackLogos.map(l => l.name).join(", ") : "None"}</span>
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
                                         <button
                                             type="button"
-                                            onClick={() => setSelectedBackLogo(null)}
-                                            className={`px-4 py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${
-                                                !selectedBackLogo
+                                            onClick={() => setSelectedBackLogos([])}
+                                            className={`px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                selectedBackLogos.length === 0
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                     : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                             }`}
                                         >
                                             None
                                         </button>
-                                        {product.logos.filter(l => !l.positions || l.positions.includes("back")).map((logo) => (
-                                            <button
-                                                key={logo.id || logo.name}
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedBackLogo(logo);
-                                                    if (window.innerWidth < 1024) {
-                                                        const imageSection = document.getElementById('product-image');
-                                                        if (imageSection) {
-                                                            imageSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        {product.logos.filter(l => !l.positions || l.positions.includes("back")).map((logo) => {
+                                            const isSelected = selectedBackLogos.some(l => (l.id && l.id === logo.id) || l.name === logo.name);
+                                            return (
+                                                <button
+                                                    key={logo.id || logo.name}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updatedLogos = isSelected
+                                                            ? selectedBackLogos.filter(l => !((l.id && l.id === logo.id) || l.name === logo.name))
+                                                            : [...selectedBackLogos, logo];
+                                                        setSelectedBackLogos(updatedLogos);
+                                                        if (!isSelected) {
+                                                            if (window.innerWidth < 1024) {
+                                                                document.getElementById('product-image')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                            }
+                                                            if (updatedLogos.length === 2) {
+                                                                const ids = updatedLogos.map(l => l.id);
+                                                                const combo = product.logoCombinations?.find(c =>
+                                                                    c.logoIds.length === 2 &&
+                                                                    ids.every(id => c.logoIds.includes(id)) &&
+                                                                    c.logoIds.every(id => ids.includes(id))
+                                                                );
+                                                                if (combo?.image) {
+                                                                    setLogoPreview(combo.image);
+                                                                    setTimeout(() => setLogoPreview(null), 4000);
+                                                                } else if (logo.image) {
+                                                                    setLogoPreview(logo.image);
+                                                                    setTimeout(() => setLogoPreview(null), 2500);
+                                                                }
+                                                            } else if (logo.image) {
+                                                                setLogoPreview(logo.image);
+                                                                setTimeout(() => setLogoPreview(null), 2500);
+                                                            }
                                                         }
-                                                    }
-                                                    if (logo.image) {
-                                                        setLogoPreview(logo.image);
-                                                        setTimeout(() => setLogoPreview(null), 2500);
-                                                    }
-                                                }}
-                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${
-                                                    selectedBackLogo?.id === logo.id || selectedBackLogo?.name === logo.name
-                                                        ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
-                                                        : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
-                                                }`}
-                                            >
-                                                {logo.image && (
-                                                    <img src={logo.image} alt={logo.name} className="w-7 h-7 rounded-lg object-cover" />
-                                                )}
-                                                {logo.name}
-                                            </button>
-                                        ))}
+                                                    }}
+                                                    className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                        isSelected
+                                                            ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
+                                                            : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
+                                                    }`}
+                                                >
+                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-5 h-5 sm:w-7 sm:h-7 rounded-md object-cover" />}
+                                                    {logo.name}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -318,96 +369,111 @@ export default function ProductDetails() {
 
                         {/* Side Logo Selection */}
                         {product.logos && product.logos.filter(l => !l.positions || l.positions.includes("side")).length > 0 && (
-                            <div className="space-y-5">
+                            <div className="space-y-2 sm:space-y-5">
                                 <div>
-                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
-                                        Side Logo · <span className="text-brand-navy">{selectedSideLogo?.name || "None"}</span>
+                                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
+                                        Side Logo · <span className="text-brand-navy">{selectedSideLogos.length > 0 ? selectedSideLogos.map(l => l.name).join(", ") : "None"}</span>
                                     </h3>
                                     <div className="flex flex-wrap gap-3">
                                         <button
                                             type="button"
-                                            onClick={() => setSelectedSideLogo(null)}
-                                            className={`px-4 py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${
-                                                !selectedSideLogo
+                                            onClick={() => setSelectedSideLogos([])}
+                                            className={`px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                selectedSideLogos.length === 0
                                                     ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                     : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                             }`}
                                         >
                                             None
                                         </button>
-                                        {product.logos.filter(l => !l.positions || l.positions.includes("side")).map((logo) => (
-                                            <button
-                                                key={logo.id || logo.name}
-                                                type="button"
-                                                onClick={() => {
-                                                    setSelectedSideLogo(logo);
-                                                    if (window.innerWidth < 1024) {
-                                                        const imageSection = document.getElementById('product-image');
-                                                        if (imageSection) {
-                                                            imageSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        {product.logos.filter(l => !l.positions || l.positions.includes("side")).map((logo) => {
+                                            const isSelected = selectedSideLogos.some(l => (l.id && l.id === logo.id) || l.name === logo.name);
+                                            return (
+                                                <button
+                                                    key={logo.id || logo.name}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedSideLogos(prev =>
+                                                            isSelected ? prev.filter(l => !((l.id && l.id === logo.id) || l.name === logo.name)) : [...prev, logo]
+                                                        );
+                                                        if (!isSelected && logo.image && window.innerWidth < 1024) {
+                                                            document.getElementById('product-image')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                         }
-                                                    }
-                                                    if (logo.image) {
-                                                        setLogoPreview(logo.image);
-                                                        setTimeout(() => setLogoPreview(null), 2500);
-                                                    }
-                                                }}
-                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${
-                                                    selectedSideLogo?.id === logo.id || selectedSideLogo?.name === logo.name
-                                                        ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
-                                                        : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
-                                                }`}
-                                            >
-                                                {logo.image && (
-                                                    <img src={logo.image} alt={logo.name} className="w-7 h-7 rounded-lg object-cover" />
-                                                )}
-                                                {logo.name}
-                                            </button>
-                                        ))}
+                                                        if (!isSelected && logo.image) {
+                                                            setLogoPreview(logo.image);
+                                                            setTimeout(() => setLogoPreview(null), 2500);
+                                                        }
+                                                    }}
+                                                    className={`flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 border-2 active:scale-95 ${
+                                                        isSelected
+                                                            ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
+                                                            : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
+                                                    }`}
+                                                >
+                                                    {logo.image && <img src={logo.image} alt={logo.name} className="w-5 h-5 sm:w-7 sm:h-7 rounded-md object-cover" />}
+                                                    {logo.name}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {/* Additional Logo Fee Notice */}
-                        {[selectedFrontLogo, selectedBackLogo, selectedSideLogo].filter(Boolean).length === 3 ? (
-                            <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-2xl">
-                                <Info size={18} className="text-brand-orange flex-shrink-0" />
-                                <p className="text-sm font-bold text-brand-orange">
-                                    +{formatPrice(1000)} additional fee for 3 logos
-                                </p>
-                            </div>
-                        ) : null}
+                        {(() => {
+                            const freeLogos = ["DAUSTIAN+ENGINEERS"];
+                            const billable = (arr) => arr.filter(l => !freeLogos.includes(l.name)).length;
+                            const totalLogoCount = billable(selectedFrontLogos) + billable(selectedBackLogos) + billable(selectedSideLogos);
+                            const extraLogos = Math.max(0, totalLogoCount - 2);
+                            if (extraLogos === 0) return null;
+                            return (
+                                <div className="flex items-center gap-3 p-4 bg-orange-50 border border-orange-200 rounded-2xl">
+                                    <Info size={18} className="text-brand-orange flex-shrink-0" />
+                                    <p className="text-sm font-bold text-brand-orange">
+                                        +{formatPrice(extraLogos * 500)} logo fee ({extraLogos} extra logo{extraLogos > 1 ? "s" : ""} × {formatPrice(500)})
+                                    </p>
+                                </div>
+                            );
+                        })()}
 
                         {/* Colors */}
                         {product.colors && product.colors.length > 0 && (
                             <div>
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-5">
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 sm:mb-5">
                                     Select Color · <span className="text-brand-navy">{selectedColor?.name}</span>
                                 </h3>
-                                <div className="flex gap-4">
-                                    {product.colors.map((color) => (
-                                        <button
-                                            key={color.name}
-                                            onClick={() => setSelectedColor(color)}
-                                            className={`relative w-12 h-12 rounded-full ring-2 ring-offset-4 transition-all duration-300 interactive-scale ${selectedColor?.name === color.name
-                                                ? "ring-brand-orange"
-                                                : "ring-transparent"
-                                                }`}
-                                        >
-                                            <span
-                                                className="block w-full h-full rounded-full shadow-inner border border-black/5"
-                                                style={{ backgroundColor: color.hex }}
-                                            />
-                                            {selectedColor?.name === color.name && (
-                                                <span className="absolute inset-0 flex items-center justify-center">
-                                                    <svg className="w-5 h-5 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                </span>
-                                            )}
-                                        </button>
-                                    ))}
+                                <div className="flex items-center gap-5 flex-wrap">
+                                    {/* Color swatches */}
+                                    <div className="flex gap-3">
+                                        {product.colors.map((color) => (
+                                            <button
+                                                key={color.name}
+                                                onClick={() => {
+                                                    setSelectedColor(color);
+                                                    document.getElementById('product-image')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                }}
+                                                className={`relative w-8 h-8 rounded-full ring-2 ring-offset-2 transition-all duration-300 active:scale-95 ${selectedColor?.name === color.name
+                                                    ? "ring-brand-orange"
+                                                    : "ring-transparent"
+                                                    }`}
+                                                aria-label={`Select ${color.name} color`}
+                                            >
+                                                <span
+                                                    className="block w-full h-full rounded-full shadow-inner border border-black/5"
+                                                    style={{ backgroundColor: color.hex }}
+                                                />
+                                                {selectedColor?.name === color.name && (
+                                                    <span className="absolute inset-0 flex items-center justify-center">
+                                                        <svg className="w-4 h-4 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+
                                 </div>
                             </div>
                         )}
@@ -415,7 +481,7 @@ export default function ProductDetails() {
                         {/* Sizes */}
                         {product.sizes && product.sizes.length > 0 && (
                             <div>
-                                <div className="flex justify-between items-center mb-5">
+                                <div className="flex justify-between items-center mb-2 sm:mb-5">
                                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Select Your Size</h3>
                                     <button className="text-[10px] text-brand-orange font-black uppercase tracking-widest hover:underline">Size Guide</button>
                                 </div>
@@ -424,7 +490,7 @@ export default function ProductDetails() {
                                         <button
                                             key={size}
                                             onClick={() => setSelectedSize(size)}
-                                            className={`min-w-[70px] h-14 rounded-xl font-black text-sm transition-all duration-300 border-2 interactive-scale ${selectedSize === size
+                                            className={`min-w-[52px] sm:min-w-[70px] h-9 sm:h-14 rounded-xl font-black text-sm transition-all duration-300 border-2 active:scale-95 ${selectedSize === size
                                                 ? "border-brand-navy bg-brand-navy text-white shadow-xl shadow-brand-navy/20"
                                                 : "border-gray-100 text-gray-500 hover:border-brand-navy hover:text-brand-navy"
                                                 }`}
@@ -438,10 +504,10 @@ export default function ProductDetails() {
                     </div>
 
                     {/* Add to Cart Actions */}
-                    <div className="mt-auto pt-10 border-t border-gray-100 animate-in slide-in-from-bottom-5 duration-700 delay-300">
+                    <div className="mt-auto pt-3 sm:pt-10 border-t border-gray-100 animate-in slide-in-from-bottom-5 duration-700 delay-300">
                         <div className="flex flex-wrap gap-4 items-center">
                             {/* Stock Status */}
-                            <div className="w-full mb-4">
+                            <div className="w-full mb-1 sm:mb-4">
                                 <div className="flex items-center gap-2">
                                     <div className={`w-2 h-2 rounded-full ${product.stock === 0 ? "bg-red-500" : product.stock <= 5 ? "bg-orange-500" : "bg-green-500"}`} />
                                     <span className={`text-[10px] font-black uppercase tracking-widest ${product.stock === 0 ? "text-red-500" : product.stock <= 5 ? "text-orange-500" : "text-green-500"}`}>
@@ -451,19 +517,24 @@ export default function ProductDetails() {
                             </div>
 
                             {/* Quantity Selector */}
-                            <div className={`flex items-center bg-gray-50 rounded-2xl p-1 h-16 w-full sm:w-auto ${product.stock === 0 ? "opacity-50 pointer-events-none" : ""}`}>
+                            <div className={`flex items-center bg-gray-50 rounded-2xl p-1 h-11 sm:h-16 w-full sm:w-auto ${product.stock === 0 ? "opacity-50 pointer-events-none" : ""}`}>
                                 <button
                                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                    className="w-12 h-full rounded-xl hover:bg-white hover:shadow-sm text-xl font-bold transition-all"
-                                    disabled={product.stock === 0}
+                                    className="w-10 sm:w-12 h-full rounded-xl hover:bg-white hover:shadow-sm active:scale-95 active:bg-brand-navy active:text-white text-xl font-bold transition-all"
+                                    disabled={product.stock === 0 || quantity <= 1}
+                                    aria-label="Decrease quantity"
                                 >
                                     −
                                 </button>
-                                <span className="w-14 text-center font-black text-brand-navy">{quantity}</span>
+                                <span className="w-16 sm:w-14 text-center font-black text-brand-navy text-base sm:text-base">{quantity}</span>
                                 <button
-                                    onClick={() => setQuantity(q => Math.min(product.stock || 99, q + 1))}
-                                    className="w-12 h-full rounded-xl hover:bg-white hover:shadow-sm text-xl font-bold transition-all"
-                                    disabled={product.stock === 0}
+                                    onClick={() => setQuantity(q => {
+                                        const maxQty = product.stock > 0 ? product.stock : 99;
+                                        return Math.min(maxQty, q + 1);
+                                    })}
+                                    className="w-10 sm:w-12 h-full rounded-xl hover:bg-white hover:shadow-sm active:scale-95 active:bg-brand-navy active:text-white text-xl font-bold transition-all"
+                                    disabled={product.stock === 0 || (product.stock > 0 && quantity >= product.stock)}
+                                    aria-label="Increase quantity"
                                 >
                                     +
                                 </button>
@@ -474,12 +545,12 @@ export default function ProductDetails() {
                                 variant={product.stock === 0 ? "secondary" : "primary"}
                                 size="lg"
                                 uppercase={false}
-                                className={`flex-1 h-16 rounded-2xl gap-4 shadow-xl shadow-brand-navy/10 group normal-case min-w-[200px] transition-all ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "hover:-translate-y-0.5 hover:shadow-brand-orange/20"}`}
+                                className={`flex-1 h-11 sm:h-16 rounded-2xl gap-2 sm:gap-4 shadow-xl shadow-brand-navy/10 group normal-case min-w-0 transition-all active:scale-[0.98] ${product.stock === 0 ? "opacity-50 cursor-not-allowed" : "hover:-translate-y-0.5 hover:shadow-brand-orange/20"}`}
                                 disabled={product.stock === 0}
                                 onClick={() => {
                                     if (product.stock === 0) return;
 
-                                    // Validate selections
+                                    // Validate required selections
                                     if (product.hoodieTypes?.length > 0 && !selectedHoodieType) {
                                         alert('Please select a hoodie type');
                                         return;
@@ -492,31 +563,28 @@ export default function ProductDetails() {
                                         alert('Please select a size');
                                         return;
                                     }
-                                    if (product.logos?.length > 0 && !selectedFrontLogo && !selectedBackLogo) {
-                                        alert('Please select at least one logo (front or back)');
-                                        return;
-                                    }
+                                    // Logo selection is optional - removed strict validation
 
                                     addItem({
                                         ...product,
                                         image: mainImage || product.image,
                                         selectedHoodieType,
+                                        isCropTop: product.hasCropTopOption ? isCropTop : false,
                                         selectedColor: selectedColor?.name,
                                         selectedSize: selectedSize,
-                                        selectedFrontLogo: selectedFrontLogo?.name || null,
-                                        selectedBackLogo: selectedBackLogo?.name || null,
-                                        selectedSideLogo: selectedSideLogo?.name || null,
+                                        selectedFrontLogo: selectedFrontLogos.length > 0 ? selectedFrontLogos.map(l => l.name).join(", ") : null,
+                                        selectedBackLogo: selectedBackLogos.length > 0 ? selectedBackLogos.map(l => l.name).join(", ") : null,
+                                        selectedSideLogo: selectedSideLogos.length > 0 ? selectedSideLogos.map(l => l.name).join(", ") : null,
                                     }, quantity);
-                                    setShowAddedAnimation(true);
-                                    setTimeout(() => setShowAddedAnimation(false), 2000);
+                                    showToast(`${quantity}x ${product.name} added to bag!`);
                                 }}
                             >
                                 {product.stock === 0 ? (
-                                    <span className="text-base">Sold Out</span>
+                                    <span className="text-sm sm:text-base font-bold">Sold Out</span>
                                 ) : (
                                     <>
-                                        <ShoppingCart size={22} className="group-hover:rotate-12 transition-transform" />
-                                        <span className="text-base">Add to Shopping Bag</span>
+                                        <ShoppingCart size={20} className="sm:w-[22px] sm:h-[22px] group-hover:rotate-12 transition-transform" />
+                                        <span className="text-sm sm:text-base font-bold">Add to Shopping Bag</span>
                                     </>
                                 )}
                             </Button>
@@ -531,30 +599,33 @@ export default function ProductDetails() {
 
                         </div>
 
-                        {/* Trust Badges */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 sm:mt-12 bg-gray-50/50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-xl shadow-sm">
-                                    <Truck size={20} className="text-brand-orange" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase text-gray-900 leading-none">Fast Delivery</p>
-                                    <p className="text-[10px] text-gray-500 mt-1">{product.shippingTimeline || "2-4 days campus ship"}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-xl shadow-sm">
-                                    <Shield size={20} className="text-green-500" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase text-gray-900 leading-none">Secure Payment</p>
-                                    <p className="text-[10px] text-gray-500 mt-1">100% encrypted</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </main>
+
+            {/* Trust Badges */}
+            <div className="max-w-7xl mx-auto px-4 pb-8 sm:pb-16">
+                <div className="grid grid-cols-2 gap-4 bg-gray-50/50 p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-xl shadow-sm">
+                            <Truck size={20} className="text-brand-orange" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase text-gray-900 leading-none">Fast Delivery</p>
+                            <p className="text-[10px] text-gray-500 mt-1">{product.shippingTimeline || "10-15 days campus ship"}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-xl shadow-sm">
+                            <Shield size={20} className="text-green-500" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase text-gray-900 leading-none">Secure Payment</p>
+                            <p className="text-[10px] text-gray-500 mt-1">100% encrypted</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
     );

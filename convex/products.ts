@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { verifyAdminToken } from "./auth";
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -46,11 +47,24 @@ export const list = query({
                 }));
             }
             const logoImages = await resolveLogoImages(ctx, product.logoImages);
+            let logoCombinations = product.logoCombinations;
+            if (logoCombinations) {
+                logoCombinations = await Promise.all(logoCombinations.map(async (combo: any) => {
+                    if (combo.image && combo.image.startsWith("kg")) {
+                        const url = await ctx.storage.getUrl(combo.image);
+                        return { ...combo, image: url || combo.image };
+                    }
+                    return combo;
+                }));
+            }
             return {
                 ...product,
                 image: imageUrl,
                 logos,
                 logoImages,
+                logoImagesRaw: product.logoImages ?? null,
+                logoCombinations: logoCombinations ?? [],
+                logoCombinationsRaw: product.logoCombinations ?? [],
             };
         }));
     },
@@ -76,11 +90,24 @@ export const getById = query({
             }));
         }
         const logoImages = await resolveLogoImages(ctx, product.logoImages);
+        let logoCombinations = product.logoCombinations;
+        if (logoCombinations) {
+            logoCombinations = await Promise.all(logoCombinations.map(async (combo: any) => {
+                if (combo.image && combo.image.startsWith("kg")) {
+                    const url = await ctx.storage.getUrl(combo.image);
+                    return { ...combo, image: url || combo.image };
+                }
+                return combo;
+            }));
+        }
         return {
             ...product,
             image: imageUrl,
             logos,
             logoImages,
+            logoImagesRaw: product.logoImages ?? null,
+            logoCombinations: logoCombinations ?? [],
+            logoCombinationsRaw: product.logoCombinations ?? [],
         };
     },
 });
@@ -103,8 +130,9 @@ export const listProductSets = query({
                     if (productImage && productImage.startsWith("kg")) {
                         productImage = await ctx.storage.getUrl(productImage) || product.image;
                     }
-                    let logos = product.logos || [];
-                    if (logos.length > 0) {
+                    // Resolve logo images
+                    let logos = product.logos;
+                    if (logos && logos.length > 0) {
                         logos = await Promise.all(logos.map(async (logo) => {
                             if (logo.image && logo.image.startsWith("kg")) {
                                 const logoUrl = await ctx.storage.getUrl(logo.image);
@@ -113,14 +141,16 @@ export const listProductSets = query({
                             return logo;
                         }));
                     }
+
                     return {
                         ...item,
                         productName: product.name,
                         productImage,
                         productPrice: product.price,
+                        productBuyingPrice: product.buyingPrice,
                         colors: product.colors || [],
                         sizes: product.sizes || [],
-                        logos,
+                        logos: logos || [],
                     };
                 })
             );
@@ -129,12 +159,19 @@ export const listProductSets = query({
                 (sum, item) => sum + (item?.productPrice || 0) * (item?.quantity || 1),
                 0
             );
+            const costOfGoods = validProducts.reduce(
+                (sum, item) => sum + (item?.productBuyingPrice ?? 0) * (item?.quantity || 1),
+                0
+            );
             return {
                 ...set,
                 image: imageUrl,
                 products: validProducts,
                 originalPrice,
                 savings: originalPrice - set.specialPrice,
+                costOfGoods,
+                netProfit: set.specialPrice - costOfGoods,
+                hasBuyingPrices: validProducts.some(p => p?.productBuyingPrice != null),
             };
         }));
     },
@@ -157,13 +194,26 @@ export const getProductSetById = query({
                 if (productImage && productImage.startsWith("kg")) {
                     productImage = await ctx.storage.getUrl(productImage) || product.image;
                 }
+                // Resolve logo images
+                let logos = product.logos;
+                if (logos && logos.length > 0) {
+                    logos = await Promise.all(logos.map(async (logo) => {
+                        if (logo.image && logo.image.startsWith("kg")) {
+                            const logoUrl = await ctx.storage.getUrl(logo.image);
+                            return { ...logo, image: logoUrl || logo.image };
+                        }
+                        return logo;
+                    }));
+                }
                 return {
                     ...item,
                     productName: product.name,
                     productImage,
                     productPrice: product.price,
+                    productBuyingPrice: product.buyingPrice,
                     colors: product.colors || [],
                     sizes: product.sizes || [],
+                    logos: logos || [],
                 };
             })
         );
@@ -172,12 +222,19 @@ export const getProductSetById = query({
             (sum, item) => sum + (item?.productPrice || 0) * (item?.quantity || 1),
             0
         );
+        const costOfGoods = validProducts.reduce(
+            (sum, item) => sum + (item?.productBuyingPrice ?? 0) * (item?.quantity || 1),
+            0
+        );
         return {
             ...productSet,
             image: imageUrl,
             products: validProducts,
             originalPrice,
             savings: originalPrice - productSet.specialPrice,
+            costOfGoods,
+            netProfit: productSet.specialPrice - costOfGoods,
+            hasBuyingPrices: validProducts.some(p => p?.productBuyingPrice != null),
         };
     },
 });
@@ -210,11 +267,18 @@ export const addProduct = mutation({
         type: v.optional(v.string()),
         shippingTimeline: v.optional(v.string()),
         hoodieTypes: v.optional(v.array(v.string())),
+        hasCropTopOption: v.optional(v.boolean()),
+        buyingPrice: v.optional(v.number()),
+        logoCombinations: v.optional(v.array(v.object({
+            logoIds: v.array(v.string()),
+            image: v.string(),
+        }))),
         adminToken: v.string(),
     },
     handler: async (ctx, args) => {
-        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust")) {
-            throw new Error("Unauthorized");
+        const isAuthorized = await verifyAdminToken(ctx, args.adminToken);
+        if (!isAuthorized) {
+            throw new Error("Unauthorized - Invalid or expired session");
         }
         const { adminToken, ...productArgs } = args;
         const productId = await ctx.db.insert("products", productArgs);
@@ -240,8 +304,9 @@ export const addProductSet = mutation({
         adminToken: v.string(),
     },
     handler: async (ctx, args) => {
-        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust")) {
-            throw new Error("Unauthorized");
+        const isAuthorized = await verifyAdminToken(ctx, args.adminToken);
+        if (!isAuthorized) {
+            throw new Error("Unauthorized - Invalid or expired session");
         }
         const { adminToken, ...setArgs } = args;
         const setId = await ctx.db.insert("productSets", setArgs);
@@ -278,11 +343,18 @@ export const updateProduct = mutation({
         type: v.optional(v.string()),
         shippingTimeline: v.optional(v.string()),
         hoodieTypes: v.optional(v.array(v.string())),
+        hasCropTopOption: v.optional(v.boolean()),
+        buyingPrice: v.optional(v.number()),
+        logoCombinations: v.optional(v.array(v.object({
+            logoIds: v.array(v.string()),
+            image: v.string(),
+        }))),
         adminToken: v.string(),
     },
     handler: async (ctx, args) => {
-        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust")) {
-            throw new Error("Unauthorized");
+        const isAuthorized = await verifyAdminToken(ctx, args.adminToken);
+        if (!isAuthorized) {
+            throw new Error("Unauthorized - Invalid or expired session");
         }
         const { id, adminToken, ...fields } = args;
         await ctx.db.patch(id, fields);
@@ -308,8 +380,9 @@ export const updateProductSet = mutation({
         adminToken: v.string(),
     },
     handler: async (ctx, args) => {
-        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust")) {
-            throw new Error("Unauthorized");
+        const isAuthorized = await verifyAdminToken(ctx, args.adminToken);
+        if (!isAuthorized) {
+            throw new Error("Unauthorized - Invalid or expired session");
         }
         const { id, adminToken, ...fields } = args;
         await ctx.db.patch(id, fields);
@@ -319,8 +392,9 @@ export const updateProductSet = mutation({
 export const removeProduct = mutation({
     args: { id: v.id("products"), adminToken: v.string() },
     handler: async (ctx, args) => {
-        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust")) {
-            throw new Error("Unauthorized");
+        const isAuthorized = await verifyAdminToken(ctx, args.adminToken);
+        if (!isAuthorized) {
+            throw new Error("Unauthorized - Invalid or expired session");
         }
         await ctx.db.delete(args.id);
     },
@@ -329,8 +403,9 @@ export const removeProduct = mutation({
 export const removeProductSet = mutation({
     args: { id: v.id("productSets"), adminToken: v.string() },
     handler: async (ctx, args) => {
-        if (args.adminToken !== (process.env.ADMIN_PASSWORD || "daust")) {
-            throw new Error("Unauthorized");
+        const isAuthorized = await verifyAdminToken(ctx, args.adminToken);
+        if (!isAuthorized) {
+            throw new Error("Unauthorized - Invalid or expired session");
         }
         await ctx.db.delete(args.id);
     },
