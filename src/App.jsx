@@ -56,6 +56,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <AuthProvider>
       <ScrollToTop />
       <AdminProvider>
         <Routes>
@@ -86,6 +87,13 @@ export default function App() {
               <Route path="/order/success/:orderId" element={<OrderSuccess />} />
               <Route path="/product/:id" element={<ProductDetails />} />
             </Route>
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/referral" element={<ProtectedRoute><Referral /></ProtectedRoute>} />
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
