@@ -620,7 +620,7 @@ ${order.items.map(item => `<tr>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-bold text-brand-navy truncate">{item.name}</p>
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                                                            QTY: {item.qty} {item?.size ? `• Size: ${item.size}` : ""} {item?.color ? `• ${item.color}` : ""} {item?.frontLogo ? `• Front: ${item.frontLogo}` : ""} {item?.backLogo ? `• Back: ${item.backLogo}` : ""} {item?.sideLogo ? `• Side: ${item.sideLogo}` : ""} {item?.logo ? `• Logo: ${item.logo}${item.logoPosition ? ` (${item.logoPosition})` : ""}` : ""}
+                                                            QTY: {item.qty} {item?.size ? `• Size: ${item.size}` : ""} {item?.color ? `• ${item.color}` : ""} {item?.hoodieType ? `• Type: ${item.hoodieType}` : ""} {item?.frontLogo ? `• Front: ${item.frontLogo}` : ""} {item?.backLogo ? `• Back: ${item.backLogo}` : ""} {item?.sideLogo ? `• Side: ${item.sideLogo}` : ""} {item?.logo ? `• Logo: ${item.logo}${item.logoPosition ? ` (${item.logoPosition})` : ""}` : ""}
                                                         </p>
                                                     </div>
                                                     <p className="font-black text-brand-navy text-sm">{formatPrice((item.price || 0) * (item.qty || 1))}</p>
