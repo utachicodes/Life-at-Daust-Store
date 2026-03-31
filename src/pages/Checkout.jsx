@@ -363,7 +363,14 @@ export default function Checkout() {
             {/* Referral Code */}
             <div className="border border-gray-200 rounded-2xl p-5 sm:p-6 space-y-4">
               <h3 className="text-sm font-black text-brand-navy uppercase tracking-wider">Referral Code</h3>
-              {appliedReferral ? (
+              {!session ? (
+                <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+                  <p className="text-xs text-gray-500 font-medium">Have a referral code? Sign in to use it.</p>
+                  <Link to="/login" state={{ from: { pathname: "/checkout" } }} className="text-xs font-black text-brand-orange hover:underline">
+                    Sign in
+                  </Link>
+                </div>
+              ) : appliedReferral ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-black text-green-800">Code applied: {referralInput.toUpperCase()}</p>
@@ -389,7 +396,7 @@ export default function Checkout() {
             </div>
 
             {/* Coupon */}
-            {userCoupon?.hasActiveCoupon && !couponApplied && (
+            {session && userCoupon?.hasActiveCoupon && !couponApplied && (
               <div className="border border-green-200 bg-green-50 rounded-2xl p-5 sm:p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
